@@ -125,8 +125,28 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-REST_FRAMEWORK={
-    'DEFAULT_AUTHENTICATION_CLASSES':(
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        #identifies/counts requests by IP address , when there is no logged in user yet
+        'rest_framework.throttling.AnonRateThrottle',
+
+        # identifies/counts requests by user ID — used when request.user is authenticated.
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+
+    #how many request are allowed for in what time window for each throttle class
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute',
+        'user': '60/minute',
+    },
 }
+
+
+# browser uploadable file (media url browser will use to to acces photos)
+MEDIA_URL = '/media/'
+
+#actual folder where the uploaded files are stored on the server
+MEDIA_ROOT = BASE_DIR / 'media'

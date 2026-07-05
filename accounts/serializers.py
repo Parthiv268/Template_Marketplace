@@ -1,9 +1,30 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password 
 from .models import Profile
 class RegisterSerializer(serializers.ModelSerializer):
-    password=serializers.CharField(write_only=True)
+    password=serializers.CharField(write_only=True,validators=[validate_password])
     # means password is accepted but will never go out
+
+    email=serializers.EmailField(required=True)
+    #email field cant be empty and is in format
+
+
+    #for unique email id of every login user
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+    
+    #for unique username and check it should be atleast of three characters
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        if len(value) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters.")
+        return value
+    
+
     class Meta:
         model=User
         fields=['username','email','password']
