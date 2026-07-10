@@ -22,6 +22,7 @@ function RegisterForm() {
         try {
             const result = await registerUser(username, email, password);
             console.log("Success:", result);
+            onRegisterSuccess()
         } catch (error) {
             setErrors(error);
         }
