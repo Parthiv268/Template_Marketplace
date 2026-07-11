@@ -16,12 +16,17 @@ class ResourceListView(generics.ListAPIView):
     serializer_class = ResourceSerializer
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description', 'category__name']
+    search_fields = ['title','^description','category__name']
+    # ^ is used to get the accurate result and not just the word being used anywhere
 
     def get_queryset(self):
         queryset = Resource.objects.filter(
             status='listed'
         ).order_by('-created_at')
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(title__icontains=search)
 
         category = self.request.query_params.get('category')
         if category:

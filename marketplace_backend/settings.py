@@ -140,8 +140,8 @@ REST_FRAMEWORK = {
 
     #how many request are allowed for in what time window for each throttle class
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '20/minute',
-        'user': '60/minute',
+        'anon': '100/minute',
+        'user': '200/minute',
     },
 }
 

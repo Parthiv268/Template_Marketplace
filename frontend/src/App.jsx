@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import AuthPage from './components/AuthPage';
 import ProfilePage from './components/ProfilePage';
 import Navbar from './components/Navbar';
+import MarketplacePage from './components/MarketplacePage';
+import ResourceDetailPage from './components/ResourceDetailPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,7 +24,7 @@ function App() {
 
   return (
     <BrowserRouter>
-       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
         <Route
           path="/login"
@@ -40,6 +42,8 @@ function App() {
               : <Navigate to="/login" />
           }
         />
+        <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/resources/:id" element={<ResourceDetailPage />} />
         <Route
           path="/"
           element={<Navigate to={isLoggedIn ? "/profile" : "/login"} />}
