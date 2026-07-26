@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 function MarketplacePage() {
     const [resources, setResources] = useState([]);
     const [categories, setCategories] = useState([]);
+    // categories returns an array which is further used in the dropdown
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [loading, setLoading] = useState(true);
@@ -106,7 +107,7 @@ function MarketplacePage() {
                             <img
                                 src={`http://127.0.0.1:8000${resource.thumbnail}`}
                                 alt={resource.title}
-                                style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                                style={{ width: '100%', height: '100px', objectFit: 'cover' }}
                                 onError={e => e.target.style.display = 'none'}
                             />
                             <div style={{ padding: '14px' }}>

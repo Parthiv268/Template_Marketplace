@@ -42,4 +42,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model=Profile
         fields=['username','email','status','bio','profile_picture']
+        read_only_fields=['status']
+        # status , username and email are theonly fields in the profile that cannot be changed.
     

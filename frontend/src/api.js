@@ -64,26 +64,42 @@ async function getProfile() {
 }
 
 async function updateProfile(formData) {
-  // getting token from local storage for authoriztion in header to ensure user logged in and can access route
-  const token = localStorage.getItem("access");
+  let token = localStorage.getItem("access");
 
-  // method patch to partially update profile data(put would require all fields to be sent)
-  // body formdata which allows sending files(jpeg) and other data
-  const res = await fetch(`${BASE_URL}/accounts/me/`, {
+  let res = await fetch(`${BASE_URL}/accounts/me/`, {
     method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw data;
+  if (res.status === 401) {
+    token = await refreshAccessToken();
+    res = await fetch(`${BASE_URL}/accounts/me/`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
   }
 
+  const data = await res.json();
+  if (!res.ok) throw data;
   return data;
+}
+async function refreshAccessToken() {
+  const refresh = localStorage.getItem("refresh");
+  if (!refresh) throw new Error("No refresh token");
+
+  const res = await fetch(`${BASE_URL}/token/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw data;
+
+  localStorage.setItem("access", data.access);
+  return data.access;
 }
 
 function decodeToken(token){

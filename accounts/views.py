@@ -3,7 +3,7 @@ from rest_framework import generics
 from rest_framework.permissions  import AllowAny,IsAuthenticated
 from .serializers import RegisterSerializer
 from .serializers import ProfileSerializer
-from rest_framework.parsers import MultiPartParser,FormParser
+from rest_framework.parsers import MultiPartParser,FormParser,JSONParser
 
 
 # Create your views here.
@@ -18,7 +18,7 @@ class MeView(generics.RetrieveUpdateAPIView):
 
     #parsers tells the DRF also to accept multipart/form-data(generally used for other file(jpeg uploads))
     #cause DRF by default only accepts json data
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser,JSONParser]
 
     def get_object(self):
         return self.request.user.profile

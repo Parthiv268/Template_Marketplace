@@ -30,7 +30,8 @@ class Resource(models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='resources'
+        related_name='resources',
+        # helps to establish a clear name for reverse relation innstead of user.Resource_set.all() to user.resources.all()
     )
     status = models.CharField(
         max_length=10,

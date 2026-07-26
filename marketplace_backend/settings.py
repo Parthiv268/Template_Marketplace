@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -151,3 +152,8 @@ MEDIA_URL = '/media/'
 
 #actual folder where the uploaded files are stored on the server
 MEDIA_ROOT = BASE_DIR / 'media'
+# added this to increaasse the time for which a single acces token remains
+SIMPLE_JWT={
+    'ACCESS_TOKEN_LIFETIME':timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME':timedelta(days=7),
+}

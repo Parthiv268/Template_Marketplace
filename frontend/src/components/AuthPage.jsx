@@ -23,6 +23,7 @@ function AuthPage({ setIsLoggedIn }) {
         ) : (
           <RegisterForm onRegisterSuccess={() => setIsLogin(true)} />
         )}
+        {/* it switches to login or register form for the details to be taken and carried out. */}
 
         <p className="auth-switch">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
