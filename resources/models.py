@@ -46,3 +46,35 @@ class Resource(models.Model):
 
     def __str__(self):
         return self.title
+class Review(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField()
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'resource')
+
+    def __str__(self):
+        return f"{self.user.username} → {self.resource.title} ({self.rating}★)"
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='wishlisted_by')
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'resource')
+
+    def __str__(self):
+        return f"{self.user.username} → {self.resource.title}"
+class Acquisition(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='acquisitions')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='acquisitions')
+    acquired_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'resource')
+
+    def __str__(self):
+        return f"{self.user.username} acquired {self.resource.title}"
