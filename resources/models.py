@@ -46,6 +46,15 @@ class Resource(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def tokens_minted(self):
+        return self.nft_tokens.count()
+
+    @property
+    def tokens_remaining(self):
+        return max(0, self.max_supply - self.tokens_minted)
+
 class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='reviews')
@@ -78,3 +87,94 @@ class Acquisition(models.Model):
 
     def __str__(self):
         return f"{self.user.username} acquired {self.resource.title}"
+
+
+# ─── NFT Models ────────────────────────────────────────────────────────────────
+
+class NFTToken(models.Model):
+    """
+    One row per minted token. Created when a buyer successfully purchases
+    a resource for the first time (primary sale).
+
+    token_number is sequential per resource:
+      Token #1 of 50, #2 of 50, etc.
+    """
+    resource = models.ForeignKey(
+        Resource,
+        on_delete=models.CASCADE,
+        related_name='nft_tokens'
+    )
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='nft_tokens_owned'
+    )
+    token_number = models.PositiveIntegerField()   # 1-based, unique per resource
+    minted_at = models.DateTimeField(auto_now_add=True)
+    # Simulated IPFS-style content hash: sha256 of (resource_id + token_number + minted_at)
+    metadata_hash = models.CharField(max_length=64, unique=True)
+    is_listed_for_resale = models.BooleanField(default=False)
+    resale_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('resource', 'token_number')
+        ordering = ['token_number']
+
+    def __str__(self):
+        return f"Token #{self.token_number} of {self.resource.title} — owned by {self.owner.username}"
+
+
+class NFTSale(models.Model):
+    """
+    Immutable audit log of every sale event.
+
+    PRIMARY sale  → first mint; creator earns 100%, royalty_amount = 0.
+    SECONDARY sale → token resale; original creator earns royalty_percent of
+                     the resale price automatically.
+    """
+    SALE_TYPE_CHOICES = [
+        ('primary', 'Primary Sale'),
+        ('secondary', 'Secondary Sale / Resale'),
+    ]
+
+    token = models.ForeignKey(
+        NFTToken,
+        on_delete=models.CASCADE,
+        related_name='sales'
+    )
+    # The person who bought this token
+    buyer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='nft_purchases'
+    )
+    # The person who sold this token (creator on primary; previous owner on secondary)
+    seller = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='nft_sold'
+    )
+    # The original creator (stays fixed even across many resales)
+    original_creator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='nft_royalties_earned'
+    )
+    sale_type = models.CharField(max_length=10, choices=SALE_TYPE_CHOICES, default='primary')
+    sale_price = models.DecimalField(max_digits=10, decimal_places=2)
+    # Royalty = 0 on primary sale; sale_price * royalty_percent/100 on secondary
+    royalty_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # What the seller (reseller) keeps after paying royalty
+    seller_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # What the original creator earns: full price on primary, royalty on secondary
+    creator_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    sold_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-sold_at']
+
+    def __str__(self):
+        return (
+            f"[{self.sale_type}] Token #{self.token.token_number} of "
+            f"'{self.token.resource.title}' — ₹{self.sale_price} on {self.sold_at:%Y-%m-%d}"
+        )

@@ -53,6 +53,12 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
             <button onClick={() => navigate('/wishlist')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Wishlist</button>
             <button onClick={() => navigate('/library')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Library</button>
             <button onClick={() => navigate('/dashboard')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Dashboard</button>
+            <button onClick={() => navigate('/nft-dashboard')} style={{
+              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              color: 'white', border: 'none', borderRadius: '6px',
+              padding: '6px 14px', cursor: 'pointer', fontSize: '14px',
+              fontWeight: 600, boxShadow: '0 0 12px rgba(124,58,237,0.5)',
+            }}>⬡ NFT</button>
           </>
         ) : (
           <button

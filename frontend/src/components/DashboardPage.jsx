@@ -76,9 +76,14 @@ function DashboardPage() {
                     <p style={{ color: '#854d0e', fontSize: '13px', margin: '0 0 8px', fontWeight: '500' }}>Potential Revenue</p>
                     <p style={{ fontSize: '28px', fontWeight: '600', margin: 0, color: '#713f12' }}>₹{totalRevenuePotential.toFixed(2)}</p>
                 </div>
-                <div style={{ padding: '20px', background: '#fdf4ff', borderRadius: '10px', border: '1px solid #e9d5ff' }}>
-                    <p style={{ color: '#6b21a8', fontSize: '13px', margin: '0 0 8px', fontWeight: '500' }}>NFT Status</p>
-                    <p style={{ fontSize: '16px', fontWeight: '500', margin: 0, color: '#581c87' }}>Coming Soon</p>
+                <div
+                    onClick={() => navigate('/nft-dashboard')}
+                    style={{ padding: '20px', background: 'linear-gradient(135deg, #fdf4ff, #ede9fe)', borderRadius: '10px', border: '1px solid #c4b5fd', cursor: 'pointer', transition: 'box-shadow 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.2)'}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+                >
+                    <p style={{ color: '#7c3aed', fontSize: '13px', margin: '0 0 8px', fontWeight: '600' }}>⬡ NFT Dashboard</p>
+                    <p style={{ fontSize: '14px', fontWeight: '600', margin: 0, color: '#581c87' }}>View Analytics →</p>
                 </div>
             </div>
 
