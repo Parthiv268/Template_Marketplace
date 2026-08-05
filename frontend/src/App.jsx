@@ -5,6 +5,10 @@ import ProfilePage from './components/ProfilePage';
 import Navbar from './components/Navbar';
 import MarketplacePage from './components/MarketplacePage';
 import ResourceDetailPage from './components/ResourceDetailPage';
+import UploadPage from './components/UploadPage';
+import WishlistPage from './components/WishlistPage';
+import LibraryPage from './components/LibraryPage';
+import DashboardPage from './components/DashboardPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -48,6 +52,10 @@ function App() {
           path="/"
           element={<Navigate to={isLoggedIn ? "/profile" : "/login"} />}
         />
+        <Route path="/upload" element={isLoggedIn ? <UploadPage /> : <Navigate to="/login" />} />
+        <Route path="/wishlist" element={isLoggedIn ? <WishlistPage /> : <Navigate to="/login" />} />
+        <Route path="/library" element={isLoggedIn ? <LibraryPage /> : <Navigate to="/login" />} />
+        <Route path="/dashboard" element={isLoggedIn ? <DashboardPage /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );

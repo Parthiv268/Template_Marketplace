@@ -49,6 +49,10 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
             >
               Logout
             </button>
+            <button onClick={() => navigate('/upload')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Upload</button>
+            <button onClick={() => navigate('/wishlist')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Wishlist</button>
+            <button onClick={() => navigate('/library')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Library</button>
+            <button onClick={() => navigate('/dashboard')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Dashboard</button>
           </>
         ) : (
           <button

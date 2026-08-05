@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, redirect } from 'react-router-dom';
 
 function ResourceDetailPage() {
     const { id } = useParams();
@@ -31,6 +31,111 @@ function ResourceDetailPage() {
             <button onClick={() => navigate('/marketplace')}>Back to Marketplace</button>
         </div>
     );
+    async function handleWishlist() {
+        const token = localStorage.getItem('access');
+        if (!token) {
+            alert('Please log in to add to wishlist.');
+            return;
+        }
+
+        try {
+            const res = await fetch('http://127.0.0.1:8000/api/resources/wishlist/', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ resource: resource.id }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert('Added to wishlist!');
+            } else if (res.status === 400) {
+                alert('Already in your wishlist.');
+            } else {
+                alert('Could not add to wishlist.');
+            }
+        } catch (err) {
+            console.log('Wishlist error:', err);
+            alert('Something went wrong.');
+        }
+    }
+    async function handleAcquire() {
+        const token = localStorage.getItem('access');
+        if (!token) {
+            alert('Please log in to acquire resources.');
+            return;
+        }
+
+        try {
+            const res = await fetch('http://127.0.0.1:8000/api/payments/create-order/', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ resource_id: resource.id }),
+            });
+
+            const orderData = await res.json();
+
+            if (!res.ok) {
+                alert(orderData.error || 'Could not create order.');
+                return;
+            }
+
+            const options = {
+                key: orderData.key,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                name: 'DevVault',
+                description: orderData.resource_title,
+                order_id: orderData.order_id,
+                redirect: false,
+                handler: async function (response) {
+                    console.log(response)
+                    console.log('Resource ID being sent:', resource.id);
+                    const verifyRes = await fetch('http://127.0.0.1:8000/api/payments/verify/', {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            resource_id: resource.id,
+                        }),
+
+                    });
+
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        alert('Payment successful! Resource added to your library.');
+                        navigate('/library');
+                    } else {
+                        alert('Payment verification failed. Contact support.');
+                    }
+                },
+                prefill: {
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    contact: '9999999999', // 10-digit Indian number forces UPI to display
+                },
+                theme: { color: '#1a56db' },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
+        } catch (err) {
+            console.log('Payment error:', err);
+            alert('Something went wrong. Please try again.');
+        }
+    }
 
     return (
         <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
@@ -99,24 +204,41 @@ function ResourceDetailPage() {
                 </div>
             )
             }
-
-            <button
-                onClick={() => alert('Payment coming soon — Razorpay integration in Day 13')}
-                style={{
-                    marginTop: '24px',
-                    width: '100%',
-                    padding: '14px',
-                    background: '#1a56db',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                }}
-            >
-                Acquire for ₹{resource.price}
-            </button>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                    onClick={handleAcquire}
+                    style={{
+                        marginTop: '24px',
+                        width: '100%',
+                        padding: '14px',
+                        background: '#1a56db',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Acquire for ₹{resource.price}
+                </button>
+                <button
+                    onClick={handleWishlist}
+                    style={{
+                        flex: 1,
+                        padding: '14px',
+                        background: 'white',
+                        color: '#1a56db',
+                        border: '2px solid #1a56db',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                    }}
+                >
+                    ♡ Wishlist
+                </button>
+            </div>
         </div>
     );
 }

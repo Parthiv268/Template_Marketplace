@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'resources',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -157,3 +158,5 @@ SIMPLE_JWT={
     'ACCESS_TOKEN_LIFETIME':timedelta(hours=2),
     'REFRESH_TOKEN_LIFETIME':timedelta(days=7),
 }
+RAZORPAY_KEY_ID='rzp_test_TLbj5wYLxsVm57'
+RAZORPAY_KEY_SECRET='aTjpA4FdwzNtkZ6AS4rIE09f'
