@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+
 # Create your models here.
 class Category(models.Model):
     name=models.CharField(max_length=100)
@@ -31,7 +32,7 @@ class Resource(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='resources',
-        # helps to establish a clear name for reverse relation innstead of user.Resource_set.all() to user.resources.all()
+        # helps to establish a clear name for reverse relation instead of user.Resource_set.all() to user.resources.all()
     )
     status = models.CharField(
         max_length=10,
@@ -67,6 +68,7 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.resource.title} ({self.rating}★)"
+
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='wishlisted_by')
@@ -77,16 +79,6 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.resource.title}"
-class Acquisition(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='acquisitions')
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='acquisitions')
-    acquired_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'resource')
-
-    def __str__(self):
-        return f"{self.user.username} acquired {self.resource.title}"
 
 
 # ─── NFT Models ────────────────────────────────────────────────────────────────
@@ -94,7 +86,11 @@ class Acquisition(models.Model):
 class NFTToken(models.Model):
     """
     One row per minted token. Created when a buyer successfully purchases
-    a resource for the first time (primary sale).
+    a resource for the first time (primary sale), OR transferred when a
+    secondary sale completes.
+
+    Owning a token = having download access.
+    Selling a token = losing download access (ownership transfers to buyer).
 
     token_number is sequential per resource:
       Token #1 of 50, #2 of 50, etc.
@@ -115,6 +111,8 @@ class NFTToken(models.Model):
     metadata_hash = models.CharField(max_length=64, unique=True)
     is_listed_for_resale = models.BooleanField(default=False)
     resale_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    # MERGE: amount paid when this token was first minted (primary sale price)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
         unique_together = ('resource', 'token_number')
@@ -202,27 +200,7 @@ class ResourceImage(models.Model):
         return f"Image #{self.order} for {self.resource.title}"
 
 
-
-class Acquisition(models.Model):
-    PAYMENT_STATUS_CHOICES = [
-        ('completed', 'Completed'),
-        ('pending', 'Pending'),
-        ('failed', 'Failed'),
-    ]
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='acquisitions')
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='acquisitions')
-    acquired_at = models.DateTimeField(auto_now_add=True)
-    paid_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0)
-    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='completed')
-
-    class Meta:
-        unique_together = ('user', 'resource')
-
-    def __str__(self):
-        return f"{self.user.username} acquired {self.resource.title}"
-
-
-# ── Brand new models — add at the very end of the file ──
+# ── Supporting models ──────────────────────────────────────────────────────────
 
 class Payout(models.Model):
     STATUS_CHOICES = [

@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from resources.models import Resource, Acquisition, NFTToken, NFTSale
+from resources.models import Resource, NFTToken, NFTSale
 
 
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -62,8 +62,10 @@ class CreateOrderView(APIView):
         except Resource.DoesNotExist:
             return Response({'error': 'Resource not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if Acquisition.objects.filter(user=request.user, resource=resource).exists():
-            return Response({'error': 'You already own this resource'}, status=status.HTTP_400_BAD_REQUEST)
+        # MERGE: check NFTToken ownership instead of Acquisition
+        # Blocks re-purchase only if user currently holds a token for this resource
+        if NFTToken.objects.filter(owner=request.user, resource=resource).exists():
+            return Response({'error': 'You already hold a token for this resource'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check NFT supply before creating an order
         if resource.tokens_minted >= resource.max_supply:
@@ -129,27 +131,23 @@ class VerifyPaymentView(APIView):
         try:
             resource = Resource.objects.get(id=resource_id)
 
-            # 1. Record acquisition (library access)
-            acquisition, created = Acquisition.objects.get_or_create(
-                user=request.user,
-                resource=resource
-            )
-
-            # 2. Mint the NFT token and create the primary sale record
+            # MERGE: mint the NFT token — this IS the acquisition.
+            # No separate Acquisition record is created.
             nft_token = None
             nft_sale = None
             nft_error = None
             try:
                 nft_token, nft_sale = _mint_nft_token(resource, request.user)
+                # Store what the buyer paid directly on the token
+                nft_token.paid_amount = resource.price
+                nft_token.save(update_fields=['paid_amount'])
             except ValueError as e:
                 # Supply exhausted after payment (edge case: two simultaneous buyers at last token)
                 nft_error = str(e)
 
             response_data = {
                 'success': True,
-                'message': 'Payment verified. Resource added to your library.',
-                'acquisition_id': acquisition.id,
-                'created': created,
+                'message': 'Payment verified. Token minted and added to your collection.',
             }
 
             if nft_token:

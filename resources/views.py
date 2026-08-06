@@ -9,10 +9,10 @@ from django.db.models.functions import TruncDate
 from decimal import Decimal
 import datetime
 
-from .models import Resource, Category, Wishlist, Review, Acquisition, NFTToken, NFTSale, ResourceImage, Payout, Report
+from .models import Resource, Category, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report
 from .serializers import (
     ResourceSerializer, CategorySerializer, ReviewSerializer,
-    WishlistSerializer, AcquisitionSerializer,
+    WishlistSerializer,
     NFTTokenSerializer, NFTSaleSerializer, NFTDashboardSerializer,
     PayoutSerializer, ReportSerializer,
 )
@@ -110,23 +110,9 @@ class WishlistView(generics.ListCreateAPIView):
             return Response({'error': 'Not in wishlist'}, status=status.HTTP_404_NOT_FOUND)
 
 
-class AcquisitionListView(generics.ListAPIView):
-    serializer_class = AcquisitionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        # Performance: single JOIN fetches resource + owner instead of N queries
-        return Acquisition.objects.filter(
-            user=self.request.user
-        ).select_related('resource', 'resource__owner').order_by('-acquired_at')
-
-
-class AcquisitionCreateView(generics.CreateAPIView):
-    serializer_class = AcquisitionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+# MERGE: AcquisitionListView and AcquisitionCreateView removed.
+# Library page now uses MyNFTTokensView (GET /api/resources/nft/my-tokens/)
+# which returns NFTToken records including resource_file for download.
 
 
 # ─── NFT Views ─────────────────────────────────────────────────────────────────
@@ -540,8 +526,9 @@ class UserStatsView(generics.GenericAPIView):
 
     def get(self, request):
         user = request.user
-        # Performance: use DB-side aggregate instead of loading all rows into Python
-        agg = Acquisition.objects.filter(user=user).aggregate(
+        # MERGE: query NFTToken instead of Acquisition
+        # items_owned = tokens currently held; total_spent = sum of paid_amount on those tokens
+        agg = NFTToken.objects.filter(owner=user).aggregate(
             items_owned=Count('id'),
             total_spent=Sum('paid_amount'),
         )
@@ -557,8 +544,12 @@ class AdminStatsView(generics.GenericAPIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        # Performance: single DB aggregate instead of loading every Acquisition into Python
-        revenue_agg = Acquisition.objects.aggregate(total=Sum('paid_amount'))
+        # MERGE: total_revenue now sourced from NFTSale.creator_earnings (primary sales)
+        # This is the canonical revenue figure — what creators actually earned
+        from django.db.models import DecimalField
+        revenue_agg = NFTSale.objects.filter(sale_type='primary').aggregate(
+            total=Sum('creator_earnings')
+        )
         data = {
             'total_users': User.objects.count(),
             'total_creators': User.objects.filter(profile__status='creator').count(),

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Resource, Category, Review, Wishlist, Acquisition, NFTToken, NFTSale
+from .models import Resource, Category, Review, Wishlist, NFTToken, NFTSale
+
 # Register your models here.
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -18,13 +19,10 @@ class ReviewAdmin(admin.ModelAdmin):
 class WishlistAdmin(admin.ModelAdmin):
     list_display = ['user', 'resource', 'added_at']
 
-@admin.register(Acquisition)
-class AcquisitionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'resource', 'acquired_at']
-
+# MERGE: Acquisition removed — NFTToken is now the ownership + download record
 @admin.register(NFTToken)
 class NFTTokenAdmin(admin.ModelAdmin):
-    list_display = ['id', 'resource', 'owner', 'token_number', 'minted_at', 'is_listed_for_resale', 'resale_price']
+    list_display = ['id', 'resource', 'owner', 'token_number', 'paid_amount', 'minted_at', 'is_listed_for_resale', 'resale_price']
     list_filter = ['is_listed_for_resale', 'resource']
     search_fields = ['resource__title', 'owner__username', 'metadata_hash']
 
@@ -35,4 +33,4 @@ class NFTSaleAdmin(admin.ModelAdmin):
         'sale_price', 'royalty_amount', 'creator_earnings', 'sold_at'
     ]
     list_filter = ['sale_type']
-    search_fields = ['token__resource__title', 'buyer__username', 'seller__username']
+    search_fields = ['token__resource__title', 'buyer__username', 'seller__username']

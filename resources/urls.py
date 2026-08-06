@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     CategoryListView, ResourceListView, ResourceDetailView, ResourceUploadView,
-    ReviewListCreateView, WishlistView, AcquisitionListView, AcquisitionCreateView,
+    ReviewListCreateView, WishlistView,
     NFTStatusView, NFTResaleListView, NFTListForResaleView, NFTCancelResaleView,
     NFTBuyResaleView, MyNFTTokensView, CreatorNFTDashboardView,
     PayoutCreateListView, AdminPayoutListView, AdminPayoutActionView,
@@ -14,8 +14,8 @@ urlpatterns = [
     path('upload/', ResourceUploadView.as_view(), name='resource-upload'),
     path('categories/', CategoryListView.as_view(), name='category-list'),
     path('wishlist/', WishlistView.as_view(), name='wishlist'),
-    path('library/', AcquisitionListView.as_view(), name='library'),
-    path('acquire/', AcquisitionCreateView.as_view(), name='acquire'),
+    # MERGE: /library/ and /acquire/ removed — use /nft/my-tokens/ for the library page instead
+
     path('<int:resource_id>/reviews/', ReviewListCreateView.as_view(), name='review-list-create'),
     path('<int:pk>/', ResourceDetailView.as_view(), name='resource-detail'),
 

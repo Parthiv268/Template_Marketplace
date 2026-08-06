@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Sum, Count
-from .models import Resource, Category, Acquisition, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report
+from .models import Resource, Category, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -64,24 +64,15 @@ class WishlistSerializer(serializers.ModelSerializer):
         fields = ['id', 'resource', 'resource_title', 'resource_price', 'thumbnail', 'added_at']
         read_only_fields = ['added_at']
 
-class AcquisitionSerializer(serializers.ModelSerializer):
-    resource_title = serializers.CharField(source='resource.title', read_only=True)
-    resource_price = serializers.DecimalField(source='resource.price', max_digits=8, decimal_places=2, read_only=True)
-    thumbnail = serializers.ImageField(source='resource.thumbnail', read_only=True)
-    file = serializers.FileField(source='resource.file', read_only=True)
-
-    class Meta:
-        model = Acquisition
-        fields = ['id', 'resource', 'resource_title', 'resource_price', 'thumbnail', 'file', 'acquired_at', 'paid_amount', 'payment_status']
-        read_only_fields = ['acquired_at', 'paid_amount', 'payment_status']
-
-
+# MERGE: AcquisitionSerializer removed — NFTTokenSerializer now serves the Library page
 
 # ─── NFT Serializers ────────────────────────────────────────────────────────────
 
 class NFTTokenSerializer(serializers.ModelSerializer):
     resource_title = serializers.CharField(source='resource.title', read_only=True)
     resource_thumbnail = serializers.ImageField(source='resource.thumbnail', read_only=True)
+    # MERGE: expose the download file URL so Library page can show a Download button
+    resource_file = serializers.FileField(source='resource.file', read_only=True)
     owner_username = serializers.CharField(source='owner.username', read_only=True)
     max_supply = serializers.IntegerField(source='resource.max_supply', read_only=True)
     royalty_percent = serializers.IntegerField(source='resource.royalty_percent', read_only=True)
@@ -90,14 +81,14 @@ class NFTTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFTToken
         fields = [
-            'id', 'resource', 'resource_title', 'resource_thumbnail',
+            'id', 'resource', 'resource_title', 'resource_thumbnail', 'resource_file',
             'owner', 'owner_username',
             'token_number', 'max_supply', 'royalty_percent',
-            'minted_at', 'metadata_hash',
+            'minted_at', 'metadata_hash', 'paid_amount',
             'is_listed_for_resale', 'resale_price',
             'is_primary_sold_out',
         ]
-        read_only_fields = ['token_number', 'minted_at', 'metadata_hash']
+        read_only_fields = ['token_number', 'minted_at', 'metadata_hash', 'paid_amount']
 
     def get_is_primary_sold_out(self, obj):
         return obj.resource.tokens_minted >= obj.resource.max_supply
