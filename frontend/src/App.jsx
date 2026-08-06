@@ -12,6 +12,7 @@ import DashboardPage from './components/DashboardPage';
 import NFTDashboardPage from './components/NFTDashboardPage';
 import UserDashboard from './components/UserDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import ResaleMarketplacePage from './components/ResaleMarketplacePage';
 import { getProfile } from './api.js';
 
 function App() {
@@ -58,6 +59,8 @@ function App() {
         <Route path="/library" element={isLoggedIn ? <LibraryPage /> : <Navigate to="/login" />} />
         <Route path="/dashboard" element={isLoggedIn ? <DashboardPage /> : <Navigate to="/login" />} />
         <Route path="/nft-dashboard" element={isLoggedIn ? <NFTDashboardPage /> : <Navigate to="/login" />} />
+        {/* Secondary / resale market — public, no login needed to browse */}
+        <Route path="/resale-market" element={<ResaleMarketplacePage />} />
 
         {/* new */}
         <Route path="/dashboard/user" element={isLoggedIn ? <UserDashboard /> : <Navigate to="/login" />} />

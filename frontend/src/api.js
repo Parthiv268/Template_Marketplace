@@ -201,9 +201,68 @@ async function adminUpdateReport(reportId, statusValue) {
   return data;
 }
 
+// ── Secondary Market API functions ──────────────────────────────────────────
+
+/** Fetch all NFT tokens currently listed for resale (public, no auth needed) */
+async function getResaleListings() {
+  const res = await fetch(`${BASE_URL}/resources/nft/resale/`);
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+/** Owner lists one of their tokens for resale at a given price */
+async function listTokenForResale(tokenId, resalePrice) {
+  const token = localStorage.getItem('access');
+  const res = await fetch(`${BASE_URL}/resources/nft/list-resale/${tokenId}/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ resale_price: resalePrice }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+/** Cancel a resale listing (owner de-lists their token) */
+async function cancelResaleListing(tokenId) {
+  const token = localStorage.getItem('access');
+  const res = await fetch(`${BASE_URL}/resources/nft/cancel-resale/${tokenId}/`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+/** Buy a resale token — royalty is automatically split server-side */
+async function buyResaleToken(tokenId) {
+  const token = localStorage.getItem('access');
+  const res = await fetch(`${BASE_URL}/resources/nft/buy-resale/${tokenId}/`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+/** Fetch NFT tokens owned by the logged-in user (for Library NFT tab) */
+async function getMyNFTTokens() {
+  const token = localStorage.getItem('access');
+  const res = await fetch(`${BASE_URL}/resources/nft/my-tokens/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
 export {
   registerUser, loginUser, getProfile, updateProfile, decodeToken,
   getUserStats, getAdminStats,
   getMyPayouts, requestPayout, adminGetAllPayouts, adminUpdatePayout,
-  fileReport, adminGetAllReports, adminUpdateReport
+  fileReport, adminGetAllReports, adminUpdateReport,
+  getResaleListings, listTokenForResale, cancelResaleListing, buyResaleToken, getMyNFTTokens,
 };

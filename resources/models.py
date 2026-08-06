@@ -202,8 +202,6 @@ class ResourceImage(models.Model):
         return f"Image #{self.order} for {self.resource.title}"
 
 
-# ── Update Acquisition: add these two lines inside the existing class ──
-# (find your current Acquisition class and add these two fields + choices)
 
 class Acquisition(models.Model):
     PAYMENT_STATUS_CHOICES = [

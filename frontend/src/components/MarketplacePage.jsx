@@ -9,8 +9,18 @@
    - Category label in muted uppercase above title
    ============================================================ */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+/* Performance: debounce hook — delays calling fn until user stops typing */
+function useDebounce(value, delay) {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+        const timer = setTimeout(() => setDebounced(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+    return debounced;
+}
 
 function MarketplacePage() {
     const [resources, setResources] = useState([]);
@@ -20,6 +30,9 @@ function MarketplacePage() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    /* Performance: only call the API after user pauses typing for 300ms */
+    const debouncedSearch = useDebounce(search, 300);
+
     useEffect(() => {
         fetch('http://127.0.0.1:8000/api/resources/categories/')
             .then(res => res.json())
@@ -27,6 +40,11 @@ function MarketplacePage() {
             .catch(err => console.log('Categories error:', err));
         fetchResources('', '');
     }, []);
+
+    /* Performance: re-fetch only when debounced value or category changes */
+    useEffect(() => {
+        fetchResources(debouncedSearch, selectedCategory);
+    }, [debouncedSearch, selectedCategory]);
 
     const fetchResources = (searchTerm, category) => {
         let url = 'http://127.0.0.1:8000/api/resources/?';
@@ -38,8 +56,8 @@ function MarketplacePage() {
             .catch(err => { console.log('Resources error:', err); setLoading(false); });
     };
 
-    const handleSearch   = (e) => { setSearch(e.target.value); fetchResources(e.target.value, selectedCategory); };
-    const handleCategory = (e) => { setSelectedCategory(e.target.value); fetchResources(search, e.target.value); };
+    const handleSearch   = (e) => { setSearch(e.target.value); };
+    const handleCategory = (e) => { setSelectedCategory(e.target.value); };
 
     /* CHANGES TO FRONTEND — MarketplacePage: dark loading state */
     if (loading) return (

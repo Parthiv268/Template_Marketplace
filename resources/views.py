@@ -33,9 +33,11 @@ class ResourceListView(generics.ListAPIView):
     # ^ is used to get the accurate result and not just the word being used anywhere
 
     def get_queryset(self):
+        # Performance: select_related pulls owner + category in the same SQL JOIN
+        # prefetch_related fetches all images in one extra query instead of N
         queryset = Resource.objects.filter(
             status='listed'
-        ).order_by('-created_at')
+        ).select_related('owner', 'category').prefetch_related('images').order_by('-created_at')
 
         search = self.request.query_params.get('search')
         if search:
@@ -49,7 +51,8 @@ class ResourceListView(generics.ListAPIView):
 
 
 class ResourceDetailView(generics.RetrieveAPIView):
-    queryset = Resource.objects.all()
+    # Performance: pull owner + category + images in 2 queries instead of N
+    queryset = Resource.objects.select_related('owner', 'category').prefetch_related('images')
     serializer_class = ResourceSerializer
     permission_classes = [AllowAny]
 
@@ -89,7 +92,10 @@ class WishlistView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Wishlist.objects.filter(user=self.request.user).order_by('-added_at')
+        # Performance: select_related fetches resource (+ its owner) in 1 JOIN
+        return Wishlist.objects.filter(
+            user=self.request.user
+        ).select_related('resource', 'resource__owner').order_by('-added_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -109,7 +115,10 @@ class AcquisitionListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Acquisition.objects.filter(user=self.request.user).order_by('-acquired_at')
+        # Performance: single JOIN fetches resource + owner instead of N queries
+        return Acquisition.objects.filter(
+            user=self.request.user
+        ).select_related('resource', 'resource__owner').order_by('-acquired_at')
 
 
 class AcquisitionCreateView(generics.CreateAPIView):
@@ -216,6 +225,50 @@ class NFTListForResaleView(APIView):
         })
 
 
+class NFTCancelResaleView(APIView):
+    """
+    POST /api/resources/nft/cancel-resale/<token_id>/
+    Token owner cancels their resale listing, taking the token off the market.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, token_id):
+        try:
+            token = NFTToken.objects.get(id=token_id, owner=request.user)
+        except NFTToken.DoesNotExist:
+            return Response(
+                {'error': 'Token not found or you are not the owner'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not token.is_listed_for_resale:
+            return Response({'error': 'Token is not listed for resale'}, status=status.HTTP_400_BAD_REQUEST)
+
+        token.is_listed_for_resale = False
+        token.resale_price = None
+        token.save()
+
+        return Response({
+            'success': True,
+            'message': f'Token #{token.token_number} has been de-listed from the resale market.',
+        })
+
+
+class MyNFTTokensView(APIView):
+    """
+    GET /api/resources/nft/my-tokens/
+    Returns all NFT tokens owned by the currently logged-in user.
+    Used by the Library page to show a user's NFT collection.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tokens = NFTToken.objects.filter(
+            owner=request.user
+        ).select_related('resource', 'resource__owner')
+        return Response(NFTTokenSerializer(tokens, many=True, context={'request': request}).data)
+
+
 class NFTBuyResaleView(APIView):
     """
     POST /api/resources/nft/buy-resale/<token_id>/
@@ -284,33 +337,46 @@ class CreatorNFTDashboardView(APIView):
 
     def get(self, request):
         user = request.user
-        # All resources owned by this creator
-        my_resources = Resource.objects.filter(owner=user)
+        # Performance: evaluate resources once, cache in a list for reuse
+        my_resources = list(Resource.objects.filter(owner=user))
+        resource_ids = [r.id for r in my_resources]
 
         # All NFT sales where this user is the original creator
         all_sales = NFTSale.objects.filter(original_creator=user).select_related(
             'token', 'token__resource', 'buyer', 'seller'
         )
 
-        # Aggregate totals
-        primary_sales = all_sales.filter(sale_type='primary')
-        secondary_sales = all_sales.filter(sale_type='secondary')
-
-        total_primary_earnings = primary_sales.aggregate(
-            t=Sum('creator_earnings')
-        )['t'] or Decimal('0')
-
-        total_royalty_earned = secondary_sales.aggregate(
-            t=Sum('royalty_amount')
-        )['t'] or Decimal('0')
+        # Aggregate totals — single DB query each, no Python loops
+        agg = all_sales.aggregate(
+            total_primary=Sum('creator_earnings', filter=Q(sale_type='primary')),
+            total_royalty=Sum('royalty_amount', filter=Q(sale_type='secondary')),
+        )
+        total_primary_earnings = agg['total_primary'] or Decimal('0')
+        total_royalty_earned   = agg['total_royalty']  or Decimal('0')
 
         total_tokens_minted = NFTToken.objects.filter(resource__owner=user).count()
 
-        # Per-resource breakdown
+        # Performance: compute per-resource breakdown with ONE annotated query
+        # instead of 4 DB hits per resource inside a loop
+        from django.db.models import DecimalField
+        resource_agg = NFTSale.objects.filter(
+            original_creator=user,
+            token__resource_id__in=resource_ids,
+        ).values('token__resource_id', 'sale_type').annotate(
+            total_earnings=Sum('creator_earnings'),
+            total_royalty=Sum('royalty_amount'),
+            sale_count=Count('id'),
+        )
+        # Index the aggregates by (resource_id, sale_type)
+        agg_index = {}
+        for row in resource_agg:
+            key = (row['token__resource_id'], row['sale_type'])
+            agg_index[key] = row
+
         resources_breakdown = []
         for r in my_resources:
-            r_primary = all_sales.filter(token__resource=r, sale_type='primary')
-            r_secondary = all_sales.filter(token__resource=r, sale_type='secondary')
+            pri = agg_index.get((r.id, 'primary'), {})
+            sec = agg_index.get((r.id, 'secondary'), {})
             resources_breakdown.append({
                 'resource_id': r.id,
                 'title': r.title,
@@ -320,14 +386,10 @@ class CreatorNFTDashboardView(APIView):
                 'tokens_remaining': r.tokens_remaining,
                 'royalty_percent': r.royalty_percent,
                 'price': str(r.price),
-                'primary_sales_count': r_primary.count(),
-                'secondary_sales_count': r_secondary.count(),
-                'primary_revenue': str(
-                    r_primary.aggregate(t=Sum('creator_earnings'))['t'] or Decimal('0')
-                ),
-                'royalty_revenue': str(
-                    r_secondary.aggregate(t=Sum('royalty_amount'))['t'] or Decimal('0')
-                ),
+                'primary_sales_count': pri.get('sale_count', 0),
+                'secondary_sales_count': sec.get('sale_count', 0),
+                'primary_revenue': str(pri.get('total_earnings') or Decimal('0')),
+                'royalty_revenue': str(sec.get('total_royalty') or Decimal('0')),
                 'supply_percent': round(r.tokens_minted / r.max_supply * 100, 1) if r.max_supply else 0,
             })
 
@@ -385,7 +447,7 @@ class CreatorNFTDashboardView(APIView):
             'total_primary_earnings': total_primary_earnings,
             'total_royalty_earned': total_royalty_earned,
             'total_combined_earnings': total_primary_earnings + total_royalty_earned,
-            'total_resources': my_resources.count(),
+            'total_resources': len(my_resources),
             'resources_breakdown': resources_breakdown,
             'sales_over_time': sales_over_time,
             'recent_sales': recent_sales,
@@ -478,10 +540,14 @@ class UserStatsView(generics.GenericAPIView):
 
     def get(self, request):
         user = request.user
-        acquisitions = Acquisition.objects.filter(user=user)
+        # Performance: use DB-side aggregate instead of loading all rows into Python
+        agg = Acquisition.objects.filter(user=user).aggregate(
+            items_owned=Count('id'),
+            total_spent=Sum('paid_amount'),
+        )
         data = {
-            'items_owned': acquisitions.count(),
-            'total_spent': sum(a.paid_amount for a in acquisitions),
+            'items_owned': agg['items_owned'] or 0,
+            'total_spent': agg['total_spent'] or 0,
             'wishlist_count': Wishlist.objects.filter(user=user).count(),
         }
         return Response(data)
@@ -491,11 +557,13 @@ class AdminStatsView(generics.GenericAPIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
+        # Performance: single DB aggregate instead of loading every Acquisition into Python
+        revenue_agg = Acquisition.objects.aggregate(total=Sum('paid_amount'))
         data = {
             'total_users': User.objects.count(),
             'total_creators': User.objects.filter(profile__status='creator').count(),
             'total_resources': Resource.objects.count(),
-            'total_revenue': sum(a.paid_amount for a in Acquisition.objects.all()),
+            'total_revenue': revenue_agg['total'] or 0,
             'total_tokens_minted': NFTToken.objects.count(),
             'open_reports': Report.objects.filter(status='open').count(),
             'pending_payouts': Payout.objects.filter(status='requested').count(),

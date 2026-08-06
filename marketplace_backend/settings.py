@@ -48,9 +48,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    # Performance: compress all responses with gzip (reduces JSON payload 60-80%)
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    # Performance: ETag-based caching so browser skips re-download of unchanged data
+    'django.middleware.http.ConditionalGetMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -79,18 +83,28 @@ WSGI_APPLICATION = 'marketplace_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='5432'),
-        'OPTIONS': {'sslmode': 'require'},
+        'NAME': 'marketplace_local',   # Your restored database
+        'USER': 'postgres',
+        'PASSWORD': 'Parthiv@26082006',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
+
+# DATABASES = {
+# #     'default': {
+# #         'ENGINE': 'django.db.backends.postgresql',
+# #         'NAME': config('DB_NAME'),
+# #         'USER': config('DB_USER'),
+# #         'PASSWORD': config('DB_PASSWORD'),
+# #         'HOST': config('DB_HOST'),
+# #         'PORT': config('DB_PORT', default='5432'),
+# #         'OPTIONS': {'sslmode': 'require'},
+# #     }
+# # }
 
 
 # Password validation

@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     CategoryListView, ResourceListView, ResourceDetailView, ResourceUploadView,
     ReviewListCreateView, WishlistView, AcquisitionListView, AcquisitionCreateView,
-    NFTStatusView, NFTResaleListView, NFTListForResaleView, NFTBuyResaleView, CreatorNFTDashboardView,
+    NFTStatusView, NFTResaleListView, NFTListForResaleView, NFTCancelResaleView,
+    NFTBuyResaleView, MyNFTTokensView, CreatorNFTDashboardView,
     PayoutCreateListView, AdminPayoutListView, AdminPayoutActionView,
     ReportCreateView, AdminReportListView, AdminReportActionView,
     UserStatsView, AdminStatsView,
@@ -27,8 +28,12 @@ urlpatterns = [
     path('nft/resale/', NFTResaleListView.as_view(), name='nft-resale-list'),
     # List your token for resale
     path('nft/list-resale/<int:token_id>/', NFTListForResaleView.as_view(), name='nft-list-resale'),
+    # Cancel your resale listing
+    path('nft/cancel-resale/<int:token_id>/', NFTCancelResaleView.as_view(), name='nft-cancel-resale'),
     # Buy a secondary token
     path('nft/buy-resale/<int:token_id>/', NFTBuyResaleView.as_view(), name='nft-buy-resale'),
+    # All NFT tokens owned by the logged-in user
+    path('nft/my-tokens/', MyNFTTokensView.as_view(), name='nft-my-tokens'),
 
     path('payouts/', PayoutCreateListView.as_view(), name='payout-list-create'),
     path('admin/payouts/', AdminPayoutListView.as_view(), name='admin-payout-list'),

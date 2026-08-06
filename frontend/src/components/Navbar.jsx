@@ -109,7 +109,9 @@ function Navbar({ isLoggedIn, setIsLoggedIn, profile }) {
 
       <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
         {/* CHANGES TO FRONTEND — Navbar: Marketplace always visible */}
-        <NavBtn path="/marketplace" label="Marketplace" id="marketplace" />
+        <NavBtn path="/marketplace"   label="Marketplace"    id="marketplace" />
+        {/* CHANGES TO FRONTEND — Navbar: Resale Market always visible (secondary NFT market) */}
+        <NavBtn path="/resale-market" label="⬡ Resale"       id="resale-market" />
 
         {isLoggedIn ? (
           <>
