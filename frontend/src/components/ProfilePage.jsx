@@ -1,9 +1,19 @@
+/* ============================================================
+   CHANGES TO FRONTEND — ProfilePage
+   - Dark background: #0a0a0a page, #111 card
+   - Avatar ring in white with subtle glow
+   - All text adapts to white/grey contrast
+   - Inputs and textarea styled with dark palette
+   - Save/Cancel buttons updated to white primary / ghost
+   - Stat row (username/email/status) styled as info rows
+   - Removed raw token debug box from visible production UI
+   ============================================================ */
+
 import { useState, useEffect } from "react";
 import { getProfile, decodeToken, updateProfile } from "../api.js";
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
-  const [tokenInfo, setTokenInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [bio, setBio] = useState("");
@@ -18,9 +28,6 @@ function ProfilePage() {
         const data = await getProfile();
         setProfile(data);
         setBio(data.bio || "");
-        const token = localStorage.getItem('access');
-        const decoded = decodeToken(token);
-        setTokenInfo(decoded);
       } catch (error) {
         console.log("Error loading profile:", error);
       } finally {
@@ -35,14 +42,9 @@ function ProfilePage() {
     setUpdating(true);
     setUpdateError("");
     setUpdateSuccess("");
-
     const formData = new FormData();
     formData.append("bio", bio);
-    if (profilePicture) {
-      formData.append("profile_picture", profilePicture);
-      // this is to ensure that the old value of profuile_picture remains
-    }
-
+    if (profilePicture) formData.append("profile_picture", profilePicture);
     try {
       const updated = await updateProfile(formData);
       setProfile(updated);
@@ -51,146 +53,219 @@ function ProfilePage() {
       setProfilePicture(null);
     } catch (error) {
       setUpdateError("Failed to update profile. Please try again.");
-      console.log("Update error:", error);
     } finally {
       setUpdating(false);
     }
   }
 
-  if (loading) return <p>Loading profile...</p>;
-  if (!profile) return <p>Could not load profile. Please log in again.</p>;
+  /* CHANGES TO FRONTEND — ProfilePage: dark loading */
+  if (loading) return (
+    <div className="page-loading">
+      <div className="spinner" />
+      <span>Loading profile…</span>
+    </div>
+  );
+  if (!profile) return (
+    <div className="page-loading">
+      <p style={{ color: 'var(--text-secondary)' }}>Could not load profile. Please log in again.</p>
+    </div>
+  );
+
+  /* CHANGES TO FRONTEND — ProfilePage: helper row for profile info */
+  const InfoRow = ({ label, value }) => (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between',
+      padding: '12px 0',
+      borderBottom: '1px solid var(--border-subtle)',
+    }}>
+      <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 500 }}>{label}</span>
+      <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 500 }}>{value}</span>
+    </div>
+  );
 
   return (
-    <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>My Profile</h1>
+    /* CHANGES TO FRONTEND — ProfilePage: dark page wrapper */
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-page)',
+      padding: '48px 24px',
+      fontFamily: 'var(--font)',
+    }}>
+      <div style={{ maxWidth: '560px', margin: '0 auto' }}>
 
-      <img
-        src={profile.profile_picture
-          ? profile.profile_picture
-          : "https://placehold.co/120"}
-        alt="Profile"
-        width="120"
-        height="120"
-        style={{ borderRadius: '50%', objectFit: 'cover', marginBottom: '16px' }}
-      />
+        {/* CHANGES TO FRONTEND — ProfilePage: header */}
+        <h1 style={{
+          fontSize: '28px', fontWeight: 800,
+          color: 'var(--text-primary)', marginBottom: '32px',
+          letterSpacing: '-0.02em',
+        }}>
+          My Profile
+        </h1>
 
-      {!isEditing ? (
-        <div>
-          <p><strong>Username:</strong> {profile.username}</p>
-          <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Status:</strong> {profile.status}</p>
-          <p><strong>Bio:</strong> {profile.bio || "No bio yet."}</p>
-
-          {updateSuccess && (
-            <p style={{ color: 'green' }}>{updateSuccess}</p>
-          )}
-
-          <button
-            onClick={() => {
-              setIsEditing(true);
-              setUpdateSuccess("");
-            }}
+        {/* CHANGES TO FRONTEND — ProfilePage: avatar with white ring */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+          <img
+            src={profile.profile_picture || "https://placehold.co/100x100/111/fff?text=?"}
+            alt="Profile"
+            width="88"
+            height="88"
             style={{
-              marginTop: '16px',
-              padding: '8px 20px',
-              background: '#1a56db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 0 0 4px rgba(255,255,255,0.04)',
             }}
-          >
-            Edit Profile
-          </button>
+          />
+          <div>
+            <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '20px', margin: 0 }}>
+              {profile.username}
+            </p>
+            <span style={{
+              display: 'inline-block', marginTop: '6px',
+              background: profile.status === 'creator' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.08)',
+              color: profile.status === 'creator' ? '#22c55e' : '#a1a1aa',
+              fontSize: '11px', fontWeight: 600, padding: '2px 10px',
+              borderRadius: '99px', textTransform: 'capitalize',
+            }}>
+              {profile.status}
+            </span>
+          </div>
         </div>
-      ) : (
-        <form onSubmit={handleUpdate}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-              Bio
-            </label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              placeholder="Tell us about yourself..."
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '6px',
-                border: '1px solid #ccc',
-                fontSize: '14px',
-                resize: 'vertical'
-              }}
-            />
-          </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-              Profile Picture
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setProfilePicture(e.target.files[0])}
-            />
-            {profilePicture && (
-              <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-                Selected: {profilePicture.name}
-              </p>
-            )}
-          </div>
+        {/* CHANGES TO FRONTEND — ProfilePage: surface card */}
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '14px',
+          padding: '24px',
+          marginBottom: '20px',
+        }}>
+          {!isEditing ? (
+            <div>
+              <InfoRow label="Username" value={profile.username} />
+              <InfoRow label="Email"    value={profile.email} />
+              <InfoRow label="Status"   value={profile.status} />
+              <div style={{ padding: '12px 0' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '6px' }}>Bio</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6 }}>
+                  {profile.bio || "No bio yet."}
+                </p>
+              </div>
 
-          {updateError && (
-            <p style={{ color: 'red', marginBottom: '12px' }}>{updateError}</p>
+              {/* CHANGES TO FRONTEND — ProfilePage: success message */}
+              {updateSuccess && (
+                <p style={{ color: 'var(--green)', fontSize: '13px', marginTop: '8px' }}>{updateSuccess}</p>
+              )}
+
+              {/* CHANGES TO FRONTEND — ProfilePage: Edit button \u2014 white primary */}
+              <button
+                id="profile-edit-btn"
+                onClick={() => { setIsEditing(true); setUpdateSuccess(""); }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#e4e4e7'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                style={{
+                  marginTop: '20px',
+                  padding: '9px 20px',
+                  background: '#ffffff',
+                  color: '#000000',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  fontFamily: 'var(--font)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Edit Profile
+              </button>
+            </div>
+          ) : (
+            /* CHANGES TO FRONTEND — ProfilePage: edit form with dark inputs */
+            <form onSubmit={handleUpdate}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}>
+                  Bio
+                </label>
+                <textarea
+                  id="profile-bio-input"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={4}
+                  placeholder="Tell us about yourself..."
+                  className="input"
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500, marginBottom: '8px' }}>
+                  Profile Picture
+                </label>
+                <input
+                  id="profile-picture-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setProfilePicture(e.target.files[0])}
+                  style={{ color: 'var(--text-secondary)', fontSize: '13px' }}
+                />
+                {profilePicture && (
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Selected: {profilePicture.name}
+                  </p>
+                )}
+              </div>
+
+              {updateError && (
+                <p style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '12px' }}>{updateError}</p>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {/* CHANGES TO FRONTEND — ProfilePage: Save button \u2014 white primary */}
+                <button
+                  id="profile-save-btn"
+                  type="submit"
+                  disabled={updating}
+                  onMouseEnter={e => { if (!updating) e.currentTarget.style.background = '#e4e4e7'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = updating ? '#3f3f46' : '#ffffff'; }}
+                  style={{
+                    padding: '9px 20px',
+                    background: updating ? '#3f3f46' : '#ffffff',
+                    color: updating ? '#71717a' : '#000000',
+                    border: 'none', borderRadius: '8px',
+                    cursor: updating ? 'not-allowed' : 'pointer',
+                    fontSize: '14px', fontWeight: 600, fontFamily: 'var(--font)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {updating ? "Saving…" : "Save Changes"}
+                </button>
+
+                {/* CHANGES TO FRONTEND — ProfilePage: Cancel ghost button */}
+                <button
+                  id="profile-cancel-btn"
+                  type="button"
+                  onClick={() => { setIsEditing(false); setBio(profile.bio || ""); setProfilePicture(null); setUpdateError(""); }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  style={{
+                    padding: '9px 20px',
+                    background: 'transparent',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px', fontWeight: 500, fontFamily: 'var(--font)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           )}
-
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              type="submit"
-              disabled={updating}
-              style={{
-                padding: '8px 20px',
-                background: updating ? '#9ca3af' : '#1a56db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: updating ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {updating ? "Saving..." : "Save Changes"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsEditing(false);
-                setBio(profile.bio || "");
-                setProfilePicture(null);
-                setUpdateError("");
-              }}
-              style={{
-                padding: '8px 20px',
-                background: 'transparent',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
-      {tokenInfo && (
-        <div style={{ marginTop: '32px', padding: '16px', background: '#f3f4f6', borderRadius: '8px' }}>
-          <h2 style={{ fontSize: '14px', color: '#6b7280' }}>Decoded Token (dev only)</h2>
-          <pre style={{ fontSize: '12px', overflow: 'auto' }}>
-            {JSON.stringify(tokenInfo, null, 2)}
-          </pre>
         </div>
-      )}
+      </div>
     </div>
   );
 }
