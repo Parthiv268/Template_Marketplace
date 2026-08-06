@@ -178,3 +178,83 @@ class NFTSale(models.Model):
             f"[{self.sale_type}] Token #{self.token.token_number} of "
             f"'{self.token.resource.title}' — ₹{self.sale_price} on {self.sold_at:%Y-%m-%d}"
         )
+    
+
+class ResourceImage(models.Model):
+    """
+    Extra images for a resource's detail-page carousel.
+    Resource.thumbnail stays untouched — that's still what shows on the
+    marketplace grid card. These are additional images shown only on
+    the detail page carousel.
+    """
+    resource = models.ForeignKey(
+        Resource,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(upload_to='resource_images/')
+    order = models.PositiveIntegerField(default=0)  # controls slide sequence
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"Image #{self.order} for {self.resource.title}"
+
+
+# ── Update Acquisition: add these two lines inside the existing class ──
+# (find your current Acquisition class and add these two fields + choices)
+
+class Acquisition(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('completed', 'Completed'),
+        ('pending', 'Pending'),
+        ('failed', 'Failed'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='acquisitions')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='acquisitions')
+    acquired_at = models.DateTimeField(auto_now_add=True)
+    paid_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='completed')
+
+    class Meta:
+        unique_together = ('user', 'resource')
+
+    def __str__(self):
+        return f"{self.user.username} acquired {self.resource.title}"
+
+
+# ── Brand new models — add at the very end of the file ──
+
+class Payout(models.Model):
+    STATUS_CHOICES = [
+        ('requested', 'Requested'),
+        ('processing', 'Processing'),
+        ('paid', 'Paid'),
+        ('rejected', 'Rejected'),
+    ]
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payouts')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='requested')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.creator.username} - {self.amount} ({self.status})"
+
+
+class Report(models.Model):
+    TARGET_CHOICES = [('resource', 'Resource'), ('user', 'User')]
+    STATUS_CHOICES = [('open', 'Open'), ('reviewed', 'Reviewed'), ('dismissed', 'Dismissed')]
+
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_made')
+    target_type = models.CharField(max_length=10, choices=TARGET_CHOICES)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
+    reported_user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='reports_against')
+    reason = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Report by {self.reporter.username} ({self.target_type}, {self.status})"

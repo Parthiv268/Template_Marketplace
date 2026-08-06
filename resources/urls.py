@@ -1,19 +1,11 @@
 from django.urls import path
 from .views import (
-    CategoryListView,
-    ResourceListView,
-    ResourceDetailView,
-    ResourceUploadView,
-    ReviewListCreateView,
-    WishlistView,
-    AcquisitionListView,
-    AcquisitionCreateView,
-    # NFT views
-    NFTStatusView,
-    NFTResaleListView,
-    NFTListForResaleView,
-    NFTBuyResaleView,
-    CreatorNFTDashboardView,
+    CategoryListView, ResourceListView, ResourceDetailView, ResourceUploadView,
+    ReviewListCreateView, WishlistView, AcquisitionListView, AcquisitionCreateView,
+    NFTStatusView, NFTResaleListView, NFTListForResaleView, NFTBuyResaleView, CreatorNFTDashboardView,
+    PayoutCreateListView, AdminPayoutListView, AdminPayoutActionView,
+    ReportCreateView, AdminReportListView, AdminReportActionView,
+    UserStatsView, AdminStatsView,
 )
 
 urlpatterns = [
@@ -37,4 +29,15 @@ urlpatterns = [
     path('nft/list-resale/<int:token_id>/', NFTListForResaleView.as_view(), name='nft-list-resale'),
     # Buy a secondary token
     path('nft/buy-resale/<int:token_id>/', NFTBuyResaleView.as_view(), name='nft-buy-resale'),
+
+    path('payouts/', PayoutCreateListView.as_view(), name='payout-list-create'),
+    path('admin/payouts/', AdminPayoutListView.as_view(), name='admin-payout-list'),
+    path('admin/payouts/<int:pk>/', AdminPayoutActionView.as_view(), name='admin-payout-action'),
+
+    path('reports/', ReportCreateView.as_view(), name='report-create'),
+    path('admin/reports/', AdminReportListView.as_view(), name='admin-report-list'),
+    path('admin/reports/<int:pk>/', AdminReportActionView.as_view(), name='admin-report-action'),
+
+    path('stats/user/', UserStatsView.as_view(), name='user-stats'),
+    path('stats/admin/', AdminStatsView.as_view(), name='admin-stats'),
 ]

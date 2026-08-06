@@ -16,6 +16,7 @@ function UploadPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [images, setImages] = useState([]);
 
   useEffect(() => {
     fetch('http://127.0.0.1:8000/api/resources/categories/')
@@ -46,6 +47,7 @@ function UploadPage() {
     formData.append('category', category);
     formData.append('thumbnail', thumbnail);
     formData.append('file', file);
+    images.forEach(img => formData.append('images', img));
 
     try {
       const token = localStorage.getItem('access');
@@ -173,6 +175,23 @@ function UploadPage() {
             required
           />
           {thumbnail && <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>Selected: {thumbnail.name}</p>}
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontWeight: '500', marginBottom: '6px' }}>
+            Additional Images (optional, for carousel)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={e => setImages(Array.from(e.target.files))}
+          />
+          {images.length > 0 && (
+            <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+              {images.length} image(s) selected
+            </p>
+          )}
         </div>
 
         <div style={{ marginBottom: '24px' }}>

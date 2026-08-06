@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ImageCarousel from './ImageCarousel';
 
 function ResourceDetailPage() {
     const { id } = useParams();
@@ -128,14 +129,15 @@ function ResourceDetailPage() {
                 ← Back to Marketplace
             </button>
 
-            {resource.thumbnail && (
-                <img
-                    src={resource.thumbnail}
-                    alt={resource.title}
-                    style={{ width: '100%', maxHeight: '380px', objectFit: 'cover', borderRadius: '14px', marginBottom: '28px' }}
-                />
-            )}
-
+            <ImageCarousel
+            images={
+                resource.images && resource.images.length > 0
+                ? resource.images
+                : resource.thumbnail
+                ? [{ image: resource.thumbnail }]
+                : []
+                }
+            />
             {/* ── Minted Token Success Card ─────────────────────── */}
             {mintedToken && (
                 <div style={{

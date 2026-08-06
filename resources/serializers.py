@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Sum, Count
-from .models import Resource, Category, Acquisition, Wishlist, Review, NFTToken, NFTSale
+from .models import Resource, Category, Acquisition, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -8,19 +8,18 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name', 'description']
 
+class ResourceImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceImage
+        fields = ['id', 'image', 'order']
+
 
 class ResourceSerializer(serializers.ModelSerializer):
-    owner_username = serializers.CharField(
-        source='owner.username',
-        read_only=True
-    )
-    category_name = serializers.CharField(
-        source='category.name',
-        read_only=True
-    )
+    owner_username = serializers.CharField(source='owner.username', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
     tokens_minted = serializers.IntegerField(read_only=True)
     tokens_remaining = serializers.IntegerField(read_only=True)
-    # here source helps them fetch data from the foreign key
+    images = ResourceImageSerializer(many=True, read_only=True)   # ← new
 
     class Meta:
         model = Resource
@@ -32,13 +31,13 @@ class ResourceSerializer(serializers.ModelSerializer):
             'status', 'max_supply', 'royalty_percent',
             'token_id', 'ipfs_hash', 'created_at',
             'tokens_minted', 'tokens_remaining',
+            'images',   # ← new
         ]
         read_only_fields = [
             'owner', 'status',
             'token_id', 'ipfs_hash', 'created_at',
             'tokens_minted', 'tokens_remaining',
         ]
-
 
 class ReviewSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
@@ -65,7 +64,6 @@ class WishlistSerializer(serializers.ModelSerializer):
         fields = ['id', 'resource', 'resource_title', 'resource_price', 'thumbnail', 'added_at']
         read_only_fields = ['added_at']
 
-
 class AcquisitionSerializer(serializers.ModelSerializer):
     resource_title = serializers.CharField(source='resource.title', read_only=True)
     resource_price = serializers.DecimalField(source='resource.price', max_digits=8, decimal_places=2, read_only=True)
@@ -74,8 +72,9 @@ class AcquisitionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Acquisition
-        fields = ['id', 'resource', 'resource_title', 'resource_price', 'thumbnail', 'file', 'acquired_at']
-        read_only_fields = ['acquired_at']
+        fields = ['id', 'resource', 'resource_title', 'resource_price', 'thumbnail', 'file', 'acquired_at', 'paid_amount', 'payment_status']
+        read_only_fields = ['acquired_at', 'paid_amount', 'payment_status']
+
 
 
 # ─── NFT Serializers ────────────────────────────────────────────────────────────
@@ -147,3 +146,23 @@ class NFTDashboardSerializer(serializers.Serializer):
 
     # Tokens owned by this creator (their NFT collection)
     my_tokens = NFTTokenSerializer(many=True)
+
+
+class PayoutSerializer(serializers.ModelSerializer):
+    creator_username = serializers.CharField(source='creator.username', read_only=True)
+
+    class Meta:
+        model = Payout
+        fields = ['id', 'creator', 'creator_username', 'amount', 'status', 'requested_at', 'paid_at', 'notes']
+        read_only_fields = ['creator', 'status', 'requested_at', 'paid_at', 'notes']
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter_username = serializers.CharField(source='reporter.username', read_only=True)
+    resource_title = serializers.CharField(source='resource.title', read_only=True, default=None)
+    reported_username = serializers.CharField(source='reported_user.username', read_only=True, default=None)
+
+    class Meta:
+        model = Report
+        fields = ['id', 'reporter', 'reporter_username', 'target_type', 'resource', 'resource_title', 'reported_user', 'reported_username', 'reason', 'status', 'created_at']
+        read_only_fields = ['reporter', 'status', 'created_at']

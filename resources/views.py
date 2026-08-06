@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics, filters, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,12 +9,14 @@ from django.db.models.functions import TruncDate
 from decimal import Decimal
 import datetime
 
-from .models import Resource, Category, Wishlist, Review, Acquisition, NFTToken, NFTSale
+from .models import Resource, Category, Wishlist, Review, Acquisition, NFTToken, NFTSale, ResourceImage, Payout, Report
 from .serializers import (
     ResourceSerializer, CategorySerializer, ReviewSerializer,
     WishlistSerializer, AcquisitionSerializer,
     NFTTokenSerializer, NFTSaleSerializer, NFTDashboardSerializer,
+    PayoutSerializer, ReportSerializer,
 )
+from django.contrib.auth.models import User
 
 
 class CategoryListView(generics.ListAPIView):
@@ -392,3 +394,110 @@ class CreatorNFTDashboardView(APIView):
 
         serializer = NFTDashboardSerializer(data)
         return Response(serializer.data)
+
+
+class ResourceUploadView(generics.CreateAPIView):
+    serializer_class = ResourceSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def perform_create(self, serializer):
+        resource = serializer.save(owner=self.request.user)
+
+        profile = self.request.user.profile
+        if profile.status != 'creator':
+            profile.status = 'creator'
+            profile.save()
+
+        # ── new: handle extra carousel images ──
+        extra_images = self.request.FILES.getlist('images')
+        for index, img_file in enumerate(extra_images):
+            ResourceImage.objects.create(resource=resource, image=img_file, order=index)
+
+
+# ── Payouts ──
+class PayoutCreateListView(generics.ListCreateAPIView):
+    serializer_class = PayoutSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Payout.objects.filter(creator=self.request.user).order_by('-requested_at')
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
+class AdminPayoutListView(generics.ListAPIView):
+    serializer_class = PayoutSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        qs = Payout.objects.all().order_by('-requested_at')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        return qs
+
+
+class AdminPayoutActionView(generics.UpdateAPIView):
+    queryset = Payout.objects.all()
+    serializer_class = PayoutSerializer
+    permission_classes = [IsAdminUser]
+
+
+# ── Reports ──
+class ReportCreateView(generics.CreateAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(reporter=self.request.user)
+
+
+class AdminReportListView(generics.ListAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        qs = Report.objects.all().order_by('-created_at')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        return qs
+
+
+class AdminReportActionView(generics.UpdateAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+    permission_classes = [IsAdminUser]
+
+
+# ── Dashboard stats ──
+class UserStatsView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        acquisitions = Acquisition.objects.filter(user=user)
+        data = {
+            'items_owned': acquisitions.count(),
+            'total_spent': sum(a.paid_amount for a in acquisitions),
+            'wishlist_count': Wishlist.objects.filter(user=user).count(),
+        }
+        return Response(data)
+
+
+class AdminStatsView(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        data = {
+            'total_users': User.objects.count(),
+            'total_creators': User.objects.filter(profile__status='creator').count(),
+            'total_resources': Resource.objects.count(),
+            'total_revenue': sum(a.paid_amount for a in Acquisition.objects.all()),
+            'total_tokens_minted': NFTToken.objects.count(),
+            'open_reports': Report.objects.filter(status='open').count(),
+            'pending_payouts': Payout.objects.filter(status='requested').count(),
+        }
+        return Response(data)

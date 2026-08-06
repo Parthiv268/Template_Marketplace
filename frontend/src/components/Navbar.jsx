@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-function Navbar({ isLoggedIn, setIsLoggedIn }) {
+function Navbar({ isLoggedIn, setIsLoggedIn, profile }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -59,6 +59,16 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
               padding: '6px 14px', cursor: 'pointer', fontSize: '14px',
               fontWeight: 600, boxShadow: '0 0 12px rgba(124,58,237,0.5)',
             }}>⬡ NFT</button>
+
+            {/* ── NEW: two additions below ── */}
+            <button onClick={() => navigate('/dashboard/user')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>
+              My Dashboard
+            </button>
+            {profile?.is_staff && (
+              <button onClick={() => navigate('/dashboard/admin')} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>
+                Admin
+              </button>
+            )}
           </>
         ) : (
           <button

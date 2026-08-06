@@ -37,11 +37,12 @@ class RegisterSerializer(serializers.ModelSerializer):
                 )
         return user
 class ProfileSerializer(serializers.ModelSerializer):
-    username=serializers.CharField(source='user.username',read_only=True)
-    email=serializers.CharField(source='user.email',read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    is_staff = serializers.BooleanField(source='user.is_staff', read_only=True)
+
     class Meta:
-        model=Profile
-        fields=['username','email','status','bio','profile_picture']
-        read_only_fields=['status']
-        # status , username and email are theonly fields in the profile that cannot be changed.
+        model = Profile
+        fields = ['username', 'email', 'status', 'bio', 'profile_picture', 'is_staff']
+        read_only_fields = ['status', 'is_staff']
     

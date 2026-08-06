@@ -8,6 +8,9 @@ function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [notCreator, setNotCreator] = useState(false);
     const navigate = useNavigate();
+    const [payoutAmount, setPayoutAmount] = useState('');
+    const [payoutMsg, setPayoutMsg] = useState('');
+
 
     useEffect(() => {
         async function loadDashboard() {
@@ -56,6 +59,18 @@ function DashboardPage() {
         );
     }
 
+
+        async function handlePayoutRequest(e) {
+        e.preventDefault();
+        try {
+            await requestPayout(parseFloat(payoutAmount));
+            setPayoutMsg('Payout requested!');
+            setPayoutAmount('');
+        } catch {
+            setPayoutMsg('Failed to request payout.');
+        }
+        }
+
     const totalRevenuePotential = resources.reduce((sum, r) => sum + parseFloat(r.price), 0);
 
     return (
@@ -85,6 +100,19 @@ function DashboardPage() {
                     <p style={{ color: '#7c3aed', fontSize: '13px', margin: '0 0 8px', fontWeight: '600' }}>⬡ NFT Dashboard</p>
                     <p style={{ fontSize: '14px', fontWeight: '600', margin: 0, color: '#581c87' }}>View Analytics →</p>
                 </div>
+            </div>
+
+
+            <div style={{ margin: '24px 0', padding: '20px', border: '1px solid #e5e7eb', borderRadius: '10px' }}>
+            <h3 style={{ marginTop: 0 }}>Request Payout</h3>
+            <form onSubmit={handlePayoutRequest} style={{ display: 'flex', gap: '12px' }}>
+                <input type="number" placeholder="Amount (₹)" value={payoutAmount} onChange={e => setPayoutAmount(e.target.value)} required
+                style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                <button type="submit" style={{ padding: '8px 20px', background: '#1a56db', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                Request
+                </button>
+            </form>
+            {payoutMsg && <p style={{ fontSize: '13px', color: '#1a56db' }}>{payoutMsg}</p>}
             </div>
 
             <h3 style={{ marginBottom: '16px' }}>Your Resources</h3>

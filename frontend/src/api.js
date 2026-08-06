@@ -112,4 +112,98 @@ function decodeToken(token){
   }
 }
 
-export {registerUser, loginUser, getProfile, updateProfile,decodeToken};
+
+async function getUserStats() {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/stats/user/`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function getAdminStats() {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/stats/admin/`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function getMyPayouts() {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/payouts/`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function requestPayout(amount) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/payouts/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ amount }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function adminGetAllPayouts() {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/admin/payouts/`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function adminUpdatePayout(payoutId, statusValue) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/admin/payouts/${payoutId}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ status: statusValue }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function fileReport(payload) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/reports/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function adminGetAllReports() {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/admin/reports/`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function adminUpdateReport(reportId, statusValue) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/admin/reports/${reportId}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ status: statusValue }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export {
+  registerUser, loginUser, getProfile, updateProfile, decodeToken,
+  getUserStats, getAdminStats,
+  getMyPayouts, requestPayout, adminGetAllPayouts, adminUpdatePayout,
+  fileReport, adminGetAllReports, adminUpdateReport
+};
