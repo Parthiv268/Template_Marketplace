@@ -1,6 +1,7 @@
+from decimal import Decimal
 from rest_framework import serializers
 from django.db.models import Sum, Count
-from .models import Resource, Category, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report
+from .models import Resource, Category, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report, Refund
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -123,6 +124,8 @@ class NFTDashboardSerializer(serializers.Serializer):
     total_primary_earnings = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_royalty_earned = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_combined_earnings = serializers.DecimalField(max_digits=12, decimal_places=2)
+    available_balance = serializers.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0'))
+    paid_out = serializers.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0'))
     total_resources = serializers.IntegerField()
 
     # Per-resource breakdown for the table
@@ -145,7 +148,7 @@ class PayoutSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payout
         fields = ['id', 'creator', 'creator_username', 'amount', 'status', 'requested_at', 'paid_at', 'notes']
-        read_only_fields = ['creator', 'status', 'requested_at', 'paid_at', 'notes']
+        read_only_fields = ['creator', 'requested_at']
 
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -156,4 +159,13 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = ['id', 'reporter', 'reporter_username', 'target_type', 'resource', 'resource_title', 'reported_user', 'reported_username', 'reason', 'status', 'created_at']
-        read_only_fields = ['reporter', 'status', 'created_at']
+        read_only_fields = ['reporter', 'created_at']
+
+
+class RefundSerializer(serializers.ModelSerializer):
+    user_username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Refund
+        fields = ['id', 'user', 'user_username', 'resource_title', 'amount', 'reason', 'created_at']
+        read_only_fields = ['id', 'created_at']

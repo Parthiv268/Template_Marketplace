@@ -5,7 +5,7 @@ from .views import (
     NFTStatusView, NFTResaleListView, NFTListForResaleView, NFTCancelResaleView,
     NFTBuyResaleView, MyNFTTokensView, CreatorNFTDashboardView,
     PayoutCreateListView, AdminPayoutListView, AdminPayoutActionView,
-    ReportCreateView, AdminReportListView, AdminReportActionView,
+    ReportCreateView, AdminReportListView, AdminReportActionView, AdminDeleteResourceView,
     UserStatsView, AdminStatsView,ToggleResourceSaleView
 )
 
@@ -42,6 +42,7 @@ urlpatterns = [
     path('reports/', ReportCreateView.as_view(), name='report-create'),
     path('admin/reports/', AdminReportListView.as_view(), name='admin-report-list'),
     path('admin/reports/<int:pk>/', AdminReportActionView.as_view(), name='admin-report-action'),
+    path('admin/resources/<int:pk>/delete/', AdminDeleteResourceView.as_view(), name='admin-delete-resource'),
 
     path('stats/user/', UserStatsView.as_view(), name='user-stats'),
     path('stats/admin/', AdminStatsView.as_view(), name='admin-stats'),

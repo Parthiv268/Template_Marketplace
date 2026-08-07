@@ -12,7 +12,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMediaUrl } from '../api.js';
+import { getMediaUrl, fileReport, adminDeleteResource, getProfile } from '../api.js';
 import ImageCarousel from './ImageCarousel';
 
 function ResourceDetailPage() {
@@ -23,6 +23,11 @@ function ResourceDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [mintedToken, setMintedToken] = useState(null);
+    const [isStaff, setIsStaff] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [targetType, setTargetType] = useState('resource');
+    const [reportReason, setReportReason] = useState('');
+    const [submittingReport, setSubmittingReport] = useState(false);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -35,6 +40,13 @@ function ResourceDetailPage() {
                 const rData = await resourceRes.json();
                 setResource(rData);
                 if (nftRes.ok) setNftStatus(await nftRes.json());
+                
+                try {
+                    const prof = await getProfile();
+                    setIsStaff(Boolean(prof?.is_staff));
+                } catch {
+                    setIsStaff(false);
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -43,6 +55,43 @@ function ResourceDetailPage() {
         };
         loadAll();
     }, [id]);
+
+    const handleAdminDelete = async () => {
+        if (!window.confirm(`[ADMIN ACTION] Are you sure you want to permanently delete "${resource.title}" from the marketplace? This cannot be undone.`)) {
+            return;
+        }
+        try {
+            await adminDeleteResource(id);
+            alert(`Resource "${resource.title}" has been deleted by Admin.`);
+            navigate('/resources');
+        } catch (err) {
+            alert(err?.error || err?.detail || 'Failed to delete resource.');
+        }
+    };
+
+    const handleReportSubmit = async (e) => {
+        e.preventDefault();
+        if (!reportReason.trim()) {
+            alert('Please provide a reason for your complaint.');
+            return;
+        }
+        setSubmittingReport(true);
+        try {
+            await fileReport({
+                target_type: targetType,
+                resource: targetType === 'resource' ? parseInt(id) : null,
+                reported_user: targetType === 'user' ? resource.owner : null,
+                reason: reportReason,
+            });
+            alert('Your complaint has been lodged successfully. Our admin team will review it.');
+            setShowReportModal(false);
+            setReportReason('');
+        } catch (err) {
+            alert(err?.error || err?.detail || 'Failed to submit complaint. Make sure you are logged in.');
+        } finally {
+            setSubmittingReport(false);
+        }
+    };
 
     /* CHANGES TO FRONTEND — ResourceDetailPage: dark loading */
     if (loading) return (
@@ -384,7 +433,7 @@ function ResourceDetailPage() {
                         onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                         style={{
-                            flex: 1, padding: '14px',
+                            padding: '14px 20px',
                             background: 'transparent',
                             color: 'var(--text-secondary)',
                             border: '1px solid var(--border-default)',
@@ -393,7 +442,128 @@ function ResourceDetailPage() {
                             fontFamily: 'var(--font)', transition: 'all 0.15s ease',
                         }}
                     >♡ Wishlist</button>
+
+                    <button
+                        onClick={() => setShowReportModal(true)}
+                        style={{
+                            padding: '14px 20px',
+                            background: 'rgba(239,68,68,0.1)',
+                            color: '#f87171',
+                            border: '1px solid rgba(239,68,68,0.25)',
+                            borderRadius: '10px', fontSize: '14px',
+                            fontWeight: 600, cursor: 'pointer',
+                            fontFamily: 'var(--font)', transition: 'all 0.15s ease',
+                        }}
+                    >🚩 Report Complaint</button>
+
+                    {isStaff && (
+                        <button
+                            onClick={handleAdminDelete}
+                            style={{
+                                padding: '14px 20px',
+                                background: '#ef4444',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '10px', fontSize: '14px',
+                                fontWeight: 700, cursor: 'pointer',
+                                fontFamily: 'var(--font)', transition: 'all 0.15s ease',
+                                boxShadow: '0 2px 10px rgba(239,68,68,0.3)',
+                            }}
+                        >🗑️ Delete Resource (Admin)</button>
+                    )}
                 </div>
+
+                {/* ── Targeted Complaint Modal ──────────────────────────────────── */}
+                {showReportModal && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 1000, padding: '20px',
+                    }}>
+                        <div style={{
+                            background: 'var(--bg-surface)', border: '1px solid var(--border-default)',
+                            borderRadius: '16px', padding: '28px', maxWidth: '480px', width: '100%',
+                            boxShadow: 'var(--shadow-lg)',
+                        }}>
+                            <h3 style={{ color: 'var(--text-primary)', margin: '0 0 6px', fontSize: '18px', fontWeight: 700 }}>
+                                🚩 Submit Complaint / Report
+                            </h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 20px' }}>
+                                Lodge a complaint to the platform admin regarding this listing or creator.
+                            </p>
+
+                            <form onSubmit={handleReportSubmit}>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>
+                                        What are you complaining about?
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTargetType('resource')}
+                                            style={{
+                                                padding: '10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                                                background: targetType === 'resource' ? 'rgba(59,130,246,0.2)' : 'var(--bg-elevated)',
+                                                border: targetType === 'resource' ? '1px solid #3b82f6' : '1px solid var(--border-default)',
+                                                color: targetType === 'resource' ? '#60a5fa' : 'var(--text-secondary)',
+                                            }}
+                                        >📦 This Resource ({resource.title})</button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTargetType('user')}
+                                            style={{
+                                                padding: '10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                                                background: targetType === 'user' ? 'rgba(59,130,246,0.2)' : 'var(--bg-elevated)',
+                                                border: targetType === 'user' ? '1px solid #3b82f6' : '1px solid var(--border-default)',
+                                                color: targetType === 'user' ? '#60a5fa' : 'var(--text-secondary)',
+                                            }}
+                                        >👤 Creator ({resource.owner_username})</button>
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>
+                                        Complaint Reason / Details
+                                    </label>
+                                    <textarea
+                                        value={reportReason}
+                                        onChange={e => setReportReason(e.target.value)}
+                                        placeholder="Describe the issue (e.g. copyright violation, broken file, fraudulent listing)..."
+                                        rows={4}
+                                        required
+                                        style={{
+                                            width: '100%', padding: '10px 14px', borderRadius: '8px',
+                                            background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                                            color: 'var(--text-primary)', fontSize: '13px', outline: 'none', resize: 'vertical',
+                                        }}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReportModal(false)}
+                                        style={{
+                                            padding: '8px 16px', background: 'transparent',
+                                            color: 'var(--text-secondary)', border: '1px solid var(--border-default)',
+                                            borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500,
+                                        }}
+                                    >Cancel</button>
+                                    <button
+                                        type="submit"
+                                        disabled={submittingReport}
+                                        style={{
+                                            padding: '8px 20px', background: '#ef4444', color: '#ffffff',
+                                            border: 'none', borderRadius: '8px', cursor: submittingReport ? 'not-allowed' : 'pointer',
+                                            fontSize: '13px', fontWeight: 700,
+                                        }}
+                                    >{submittingReport ? 'Submitting…' : 'Submit Complaint'}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

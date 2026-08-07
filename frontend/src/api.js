@@ -137,12 +137,12 @@ async function getMyPayouts() {
   return data;
 }
 
-async function requestPayout(amount) {
+async function requestPayout(payload) {
   const token = localStorage.getItem("access");
   const res = await fetch(`${BASE_URL}/resources/payouts/`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
   if (!res.ok) throw data;
@@ -199,6 +199,19 @@ async function adminUpdateReport(reportId, statusValue) {
   const data = await res.json();
   if (!res.ok) throw data;
   return data;
+}
+
+async function adminDeleteReport(reportId) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/admin/reports/${reportId}/`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw data;
+  }
+  return true;
 }
 
 // ── Secondary Market API functions ──────────────────────────────────────────
@@ -272,6 +285,17 @@ async function toggleResourceSale(resourceId) {
   return data;
 }
 
+async function adminDeleteResource(resourceId) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/admin/resources/${resourceId}/delete/`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
 function getMediaUrl(url) {
   if (!url) return '';
   if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
@@ -284,7 +308,7 @@ export {
   registerUser, loginUser, getProfile, updateProfile, decodeToken,
   getUserStats, getAdminStats,
   getMyPayouts, requestPayout, adminGetAllPayouts, adminUpdatePayout,
-  fileReport, adminGetAllReports, adminUpdateReport,
+  fileReport, adminGetAllReports, adminUpdateReport, adminDeleteReport, adminDeleteResource,
   getResaleListings, listTokenForResale, cancelResaleListing, buyResaleToken, getMyNFTTokens, toggleResourceSale,
   getMediaUrl,
 };

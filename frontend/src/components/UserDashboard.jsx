@@ -43,34 +43,44 @@ function UserDashboard() {
               Track your total expenditure, primary mints, secondary market resales, and acquisition history.
             </p>
           </div>
-          <button
-            onClick={() => navigate('/library')}
-            style={{
-              padding: '9px 18px', background: 'var(--bg-surface)',
-              color: 'var(--text-primary)', border: '1px solid var(--border-default)',
-              borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
-            }}
-          >View My Library →</button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => navigate('/nft-dashboard')}
+              style={{
+                padding: '9px 18px', background: 'var(--bg-surface)',
+                color: 'var(--text-primary)', border: '1px solid var(--border-default)',
+                borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+              }}
+            >Creator Dashboard →</button>
+            <button
+              onClick={() => navigate('/library')}
+              style={{
+                padding: '9px 18px', background: 'var(--bg-surface)',
+                color: 'var(--text-primary)', border: '1px solid var(--border-default)',
+                borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+              }}
+            >View My Library →</button>
+          </div>
         </div>
 
         {/* Spending Stat Cards */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
           gap: '16px', marginBottom: '36px',
         }}>
           <StatCard label="Total Spent" value={`₹${parseFloat(stats?.total_spent || 0).toLocaleString('en-IN')}`} color="#f59e0b" sub="Across all acquisitions" />
-          <StatCard label="Primary Spend" value={`₹${parseFloat(stats?.primary_spent || 0).toLocaleString('en-IN')}`} color="#10b981" sub="Direct creator mints" />
+          <StatCard label="Money Refunded" value={`₹${parseFloat(stats?.total_refunded || 0).toLocaleString('en-IN')}`} color="#10b981" sub="Platform admin deletion refunds" />
+          <StatCard label="Primary Spend" value={`₹${parseFloat(stats?.primary_spent || 0).toLocaleString('en-IN')}`} color="#3b82f6" sub="Direct creator mints" />
           <StatCard label="Resale Spend" value={`₹${parseFloat(stats?.secondary_spent || 0).toLocaleString('en-IN')}`} color="#7c3aed" sub="Secondary market resales" />
           <StatCard label="Tokens Owned" value={stats?.items_owned ?? 0} color="#06b6d4" sub="Active library tokens" />
-          <StatCard label="Wishlist Items" value={stats?.wishlist_count ?? 0} color="#ffffff" sub="Saved resources" />
         </div>
 
         {/* Spending & Purchase History Log */}
         <div style={{
           background: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          borderRadius: '16px', padding: '24px',
+          borderRadius: '16px', padding: '24px', marginBottom: '32px',
         }}>
           <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '18px', margin: '0 0 16px' }}>
             Acquisition & Spending History
@@ -140,6 +150,65 @@ function UserDashboard() {
             </div>
           )}
         </div>
+
+        {/* ── Money Refunded Log ────────────────────────────── */}
+        {stats?.refunds?.length > 0 && (
+          <div style={{
+            background: 'rgba(16,185,129,0.04)',
+            border: '1px solid rgba(16,185,129,0.25)',
+            borderRadius: '16px', padding: '24px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '20px' }}>💸</span>
+              <div>
+                <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '18px', margin: 0 }}>
+                  Money Refunded Log
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+                  Refunds issued for deleted or removed marketplace resources.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(16,185,129,0.2)', textAlign: 'left' }}>
+                    {['Resource Name', 'Refund Reason', 'Refunded Amount', 'Date Issued', 'Status'].map(h => (
+                      <th key={h} style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.refunds.map(r => (
+                    <tr key={r.id} style={{ borderBottom: '1px solid rgba(16,185,129,0.1)' }}>
+                      <td style={{ padding: '12px', color: 'var(--text-primary)', fontWeight: 600 }}>
+                        {r.resource_title}
+                      </td>
+                      <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                        {r.reason}
+                      </td>
+                      <td style={{ padding: '12px', color: '#10b981', fontWeight: 700, fontSize: '14px' }}>
+                        + ₹{parseFloat(r.amount).toLocaleString('en-IN')}
+                      </td>
+                      <td style={{ padding: '12px', color: 'var(--text-muted)' }}>
+                        {new Date(r.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{
+                          background: 'rgba(16,185,129,0.15)', color: '#10b981',
+                          padding: '3px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 700,
+                        }}>
+                          ✓ REFUNDED
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

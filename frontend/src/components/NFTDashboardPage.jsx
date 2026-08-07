@@ -4,7 +4,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadialBarChart, RadialBar, PieChart, Pie, Cell,
 } from 'recharts';
- import { toggleResourceSale } from '../api.js';
+import { toggleResourceSale, requestPayout, getMyPayouts } from '../api.js';
 
 
 const API = 'http://127.0.0.1:8000';
@@ -27,9 +27,7 @@ const CHART_COLORS = ['#7c3aed', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8
 
 function fmt(n) {
   const num = parseFloat(n || 0);
-  if (num >= 100000) return `₹${(num / 100000).toFixed(1)}L`;
-  if (num >= 1000) return `₹${(num / 1000).toFixed(1)}K`;
-  return `₹${num.toFixed(2)}`;
+  return `₹${num.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 function shortDate(d) {
@@ -210,6 +208,7 @@ function NFTDashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [payoutHistory, setPayoutHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [togglingId, setTogglingId] = useState(null);
   const navigate = useNavigate();
@@ -219,18 +218,54 @@ function NFTDashboardPage() {
     setError('');
     try {
       const token = localStorage.getItem('access');
-      const res = await fetch(`${API}/api/resources/nft/dashboard/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const [res, payoutsData] = await Promise.all([
+        fetch(`${API}/api/resources/nft/dashboard/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        getMyPayouts().catch(() => []),
+      ]);
       if (!res.ok) throw new Error('Failed to load dashboard');
       const json = await res.json();
       setData(json);
+      setPayoutHistory(Array.isArray(payoutsData) ? payoutsData : []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
   }, []);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutNotes, setPayoutNotes] = useState('');
+  const [requestingPayout, setRequestingPayout] = useState(false);
+
+  const handleRequestPayout = async (e) => {
+    e.preventDefault();
+    const amt = parseFloat(payoutAmount);
+    if (!amt || amt <= 0) {
+      alert('Please enter a valid payout amount.');
+      return;
+    }
+    const avail = parseFloat(data?.available_balance || 0);
+    if (amt > avail) {
+      alert(`Payout amount (₹${amt}) exceeds your available balance (₹${avail.toFixed(2)}).`);
+      return;
+    }
+
+    setRequestingPayout(true);
+    try {
+      const res = await requestPayout({ amount: amt, notes: payoutNotes });
+      alert(res?.message || `Payout of ₹${amt} auto-approved and processed successfully!`);
+      setShowPayoutModal(false);
+      setPayoutAmount('');
+      setPayoutNotes('');
+      load();
+    } catch (err) {
+      alert(err?.error || err?.amount?.[0] || 'Failed to submit payout request.');
+    } finally {
+      setRequestingPayout(false);
+    }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -280,7 +315,7 @@ function NFTDashboardPage() {
     { name: 'Royalties Earned', value: parseFloat(total_royalty_earned || 0) },
   ];
 
-  const tabs = ['overview', 'analytics', 'collections', 'sales feed'];
+  const tabs = ['overview', 'payout history', 'analytics', 'collections', 'sales feed'];
 
   const total_potential_primary = resources_breakdown?.reduce(
     (sum, r) => sum + (parseFloat(r.price || 0) * (parseInt(r.max_supply) || 0)),
@@ -293,12 +328,25 @@ function NFTDashboardPage() {
       <div style={styles.header}>
         <div>
           <div style={styles.headerBadge}>⬡ NFT Creator Dashboard</div>
-          <h1 style={styles.title}>Token Analytics</h1>
-          <p style={styles.subtitle}>Track every mint, resale, and royalty across your collections.</p>
+          <h1 style={styles.title}>Token Analytics & Payouts</h1>
+          <p style={styles.subtitle}>Track every mint, resale, royalty, and withdraw your creator earnings.</p>
         </div>
-        <button onClick={() => navigate('/upload')} style={styles.uploadBtn}>
-          + New Collection
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => setShowPayoutModal(true)}
+            style={{
+              padding: '10px 20px', background: '#f59e0b', color: '#000000',
+              border: 'none', borderRadius: '10px', cursor: 'pointer',
+              fontWeight: 700, fontSize: '13px', fontFamily: 'var(--font)',
+              transition: 'all 0.15s ease', shadow: '0 2px 8px rgba(245,158,11,0.3)',
+            }}
+          >
+            💰 Request Payout
+          </button>
+          <button onClick={() => navigate('/upload')} style={styles.uploadBtn}>
+            + New Collection
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -322,16 +370,95 @@ function NFTDashboardPage() {
         <div style={styles.section}>
           {/* Stat Cards */}
           <div style={styles.statsGrid}>
-            <StatCard label="Tokens Minted" value={total_tokens_minted} icon="🪙"
-              sub="across all collections" color="#06b6d4" />
+            <StatCard label="Available Balance" value={`₹${parseFloat(data?.available_balance || 0).toLocaleString('en-IN')}`} icon="🏦"
+              sub={`Paid out: ₹${parseFloat(data?.paid_out || 0).toLocaleString('en-IN')}`} color="#f59e0b" />
             <StatCard label="Primary Earnings" value={fmt(total_primary_earnings)} icon="💎"
-              sub={`Potential: ₹${fmt(total_potential_primary)}`} color="#10b981" />
+              sub={`Potential: ${fmt(total_potential_primary)}`} color="#10b981" />
             <StatCard label="Royalties Earned" value={fmt(total_royalty_earned)} icon="♾️"
               sub="from secondary resales" color="#7c3aed" />
-            <StatCard label="Total Earnings" value={fmt(total_combined_earnings)} icon="🚀"
-              sub={`${total_resources} active collection${total_resources !== 1 ? 's' : ''}`}
-              color="#f59e0b" />
+            <StatCard label="Tokens Minted" value={total_tokens_minted} icon="🪙"
+              sub="across all collections" color="#06b6d4" />
           </div>
+
+          {/* Payout Request Modal */}
+          {showPayoutModal && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1000, padding: '20px',
+            }}>
+              <div style={{
+                background: 'var(--bg-surface)', border: '1px solid var(--border-default)',
+                borderRadius: '16px', padding: '28px', maxWidth: '440px', width: '100%',
+                boxShadow: 'var(--shadow-lg)',
+              }}>
+                <h3 style={{ color: 'var(--text-primary)', margin: '0 0 6px', fontSize: '18px', fontWeight: 700 }}>
+                  Request Creator Payout
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 16px' }}>
+                  Available Balance: <b style={{ color: '#f59e0b' }}>₹{parseFloat(data?.available_balance || 0).toLocaleString('en-IN')}</b>
+                </p>
+                <form onSubmit={handleRequestPayout}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>
+                      Withdrawal Amount (₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      max={data?.available_balance || 0}
+                      value={payoutAmount}
+                      onChange={e => setPayoutAmount(e.target.value)}
+                      placeholder="Enter amount to withdraw..."
+                      required
+                      style={{
+                        width: '100%', padding: '10px 14px', borderRadius: '8px',
+                        background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                        color: 'var(--text-primary)', fontSize: '14px', outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>
+                      Payout Notes / UPI / Account Details (Optional)
+                    </label>
+                    <textarea
+                      value={payoutNotes}
+                      onChange={e => setPayoutNotes(e.target.value)}
+                      placeholder="Enter UPI ID or payment note..."
+                      rows={3}
+                      style={{
+                        width: '100%', padding: '10px 14px', borderRadius: '8px',
+                        background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                        color: 'var(--text-primary)', fontSize: '13px', outline: 'none', resize: 'vertical',
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowPayoutModal(false)}
+                      style={{
+                        padding: '8px 16px', background: 'transparent',
+                        color: 'var(--text-secondary)', border: '1px solid var(--border-default)',
+                        borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500,
+                      }}
+                    >Cancel</button>
+                    <button
+                      type="submit"
+                      disabled={requestingPayout}
+                      style={{
+                        padding: '8px 20px', background: '#f59e0b', color: '#000000',
+                        border: 'none', borderRadius: '8px', cursor: requestingPayout ? 'not-allowed' : 'pointer',
+                        fontSize: '13px', fontWeight: 700,
+                      }}
+                    >{requestingPayout ? 'Submitting…' : 'Submit Request'}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* Supply bars */}
           {resources_breakdown.length > 0 && (
@@ -353,7 +480,104 @@ function NFTDashboardPage() {
             </div>
           )}
 
-          {/* Earnings split pie + recent sales */}
+          {/* Payout History Section in Overview */}
+          <div style={{ ...styles.card, marginTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={styles.cardTitle}>My Payout & Settlement History</h3>
+              <span style={{ color: COLORS.muted, fontSize: '12px' }}>{payoutHistory.length} payout{payoutHistory.length !== 1 ? 's' : ''} logged</span>
+            </div>
+            {payoutHistory.length === 0 ? (
+              <p style={{ color: COLORS.muted, fontSize: '13px', margin: 0 }}>No payout history logged yet.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <th style={{ textAlign: 'left', padding: '8px 12px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Payout ID</th>
+                      <th style={{ textAlign: 'left', padding: '8px 12px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Amount</th>
+                      <th style={{ textAlign: 'left', padding: '8px 12px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Date & Time</th>
+                      <th style={{ textAlign: 'left', padding: '8px 12px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Notes / UPI</th>
+                      <th style={{ textAlign: 'left', padding: '8px 12px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutHistory.map(p => (
+                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '10px 12px', color: COLORS.text, fontWeight: 600 }}>#{p.id}</td>
+                        <td style={{ padding: '10px 12px', color: '#f59e0b', fontWeight: 700 }}>₹{parseFloat(p.amount).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '10px 12px', color: COLORS.muted }}>
+                          {p.paid_at ? new Date(p.paid_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(p.requested_at).toLocaleDateString('en-IN')}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: COLORS.muted }}>{p.notes || '—'}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{
+                            background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            padding: '2px 8px', borderRadius: '99px',
+                            fontSize: '11px', fontWeight: 700,
+                          }}>✓ Auto-Paid</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── PAYOUT HISTORY TAB ────────────────────────────── */}
+      {activeTab === 'payout history' && (
+        <div style={styles.section}>
+          <div style={styles.card}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={styles.cardTitle}>My Payout & Settlement History</h3>
+              <p style={{ color: COLORS.muted, fontSize: '13px', margin: '4px 0 0' }}>
+                Track all auto-approved payouts and withdrawals requested from your creator balance.
+              </p>
+            </div>
+
+            {payoutHistory.length === 0 ? (
+              <p style={{ color: COLORS.muted, textAlign: 'center', padding: '40px 0', fontSize: '14px' }}>
+                No payout history logged yet. Use the "Request Payout" button at the top right to withdraw your available balance.
+              </p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Payout ID</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Amount</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Requested / Paid Date</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Notes / UPI Details</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutHistory.map(p => (
+                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '12px 14px', color: COLORS.text, fontWeight: 600 }}>#{p.id}</td>
+                        <td style={{ padding: '12px 14px', color: '#f59e0b', fontWeight: 700 }}>₹{parseFloat(p.amount).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '12px 14px', color: COLORS.muted }}>
+                          {p.paid_at ? new Date(p.paid_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(p.requested_at).toLocaleDateString('en-IN')}
+                        </td>
+                        <td style={{ padding: '12px 14px', color: COLORS.muted }}>{p.notes || '—'}</td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <span style={{
+                            background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            padding: '3px 10px', borderRadius: '99px',
+                            fontSize: '11px', fontWeight: 700,
+                          }}>✓ Auto-Paid</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={styles.card}>
               <h3 style={styles.cardTitle}>Earnings Breakdown</h3>
@@ -480,6 +704,60 @@ function NFTDashboardPage() {
               </ResponsiveContainer>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── PAYOUT HISTORY TAB ────────────────────────────── */}
+      {activeTab === 'payout history' && (
+        <div style={styles.section}>
+          <div style={styles.card}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={styles.cardTitle}>My Payout & Settlement History</h3>
+              <p style={{ color: COLORS.muted, fontSize: '13px', margin: '4px 0 0' }}>
+                Track all auto-approved payouts and withdrawals requested from your creator balance.
+              </p>
+            </div>
+
+            {payoutHistory.length === 0 ? (
+              <p style={{ color: COLORS.muted, textAlign: 'center', padding: '40px 0', fontSize: '14px' }}>
+                No payout history logged yet. Use the "Request Payout" button at the top right to withdraw your available balance.
+              </p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Payout ID</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Amount</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Requested / Paid Date</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Notes / UPI Details</th>
+                      <th style={{ textAlign: 'left', padding: '10px 14px', color: COLORS.muted, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutHistory.map(p => (
+                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '12px 14px', color: COLORS.text, fontWeight: 600 }}>#{p.id}</td>
+                        <td style={{ padding: '12px 14px', color: '#f59e0b', fontWeight: 700 }}>₹{parseFloat(p.amount).toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '12px 14px', color: COLORS.muted }}>
+                          {p.paid_at ? new Date(p.paid_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(p.requested_at).toLocaleDateString('en-IN')}
+                        </td>
+                        <td style={{ padding: '12px 14px', color: COLORS.muted }}>{p.notes || '—'}</td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <span style={{
+                            background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            padding: '3px 10px', borderRadius: '99px',
+                            fontSize: '11px', fontWeight: 700,
+                          }}>✓ Auto-Paid</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

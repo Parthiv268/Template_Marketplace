@@ -234,3 +234,17 @@ class Report(models.Model):
 
     def __str__(self):
         return f"Report by {self.reporter.username} ({self.target_type}, {self.status})"
+
+
+class Refund(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='refunds')
+    resource_title = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField(default="Resource removed by platform admin")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Refund to {self.user.username}: ₹{self.amount} for '{self.resource_title}'"

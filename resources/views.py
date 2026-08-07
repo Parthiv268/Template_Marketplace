@@ -6,15 +6,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from django.utils import timezone
 import datetime
 
-from .models import Resource, Category, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report
+from .models import Resource, Category, Wishlist, Review, NFTToken, NFTSale, ResourceImage, Payout, Report, Refund
 from .serializers import (
     ResourceSerializer, CategorySerializer, ReviewSerializer,
     WishlistSerializer,
     NFTTokenSerializer, NFTSaleSerializer, NFTDashboardSerializer,
-    PayoutSerializer, ReportSerializer,
+    PayoutSerializer, ReportSerializer, RefundSerializer,
 )
 from django.contrib.auth.models import User
 
@@ -451,6 +452,14 @@ class CreatorNFTDashboardView(APIView):
         # Tokens owned by the creator themselves (their own NFT collection)
         my_tokens = NFTToken.objects.filter(owner=user).select_related('resource')
 
+        # Calculate creator payout balance
+        total_combined_earnings = total_primary_earnings + total_royalty_earned
+        paid_out = Payout.objects.filter(
+            creator=user, status='paid'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        available_balance = max(Decimal('0'), total_combined_earnings - paid_out)
+
         # Recent sales
         recent_sales = all_sales[:20]
 
@@ -458,7 +467,9 @@ class CreatorNFTDashboardView(APIView):
             'total_tokens_minted': total_tokens_minted,
             'total_primary_earnings': total_primary_earnings,
             'total_royalty_earned': total_royalty_earned,
-            'total_combined_earnings': total_primary_earnings + total_royalty_earned,
+            'total_combined_earnings': total_combined_earnings,
+            'available_balance': available_balance,
+            'paid_out': paid_out,
             'total_resources': len(my_resources),
             'resources_breakdown': resources_breakdown,
             'sales_over_time': sales_over_time,
@@ -497,8 +508,53 @@ class PayoutCreateListView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Payout.objects.filter(creator=self.request.user).order_by('-requested_at')
 
-    def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        amount_raw = request.data.get('amount')
+        notes = request.data.get('notes', '')
+
+        try:
+            amount = Decimal(str(amount_raw))
+        except (ValueError, TypeError, InvalidOperation):
+            return Response({'error': 'Invalid payout amount.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if amount <= 0:
+            return Response({'error': 'Payout amount must be greater than 0.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        primary_earnings = NFTSale.objects.filter(
+            original_creator=user, sale_type='primary'
+        ).aggregate(total=Sum('creator_earnings'))['total'] or Decimal('0')
+
+        royalty_earnings = NFTSale.objects.filter(
+            original_creator=user, sale_type='secondary'
+        ).aggregate(total=Sum('royalty_amount'))['total'] or Decimal('0')
+
+        total_earnings = primary_earnings + royalty_earnings
+
+        total_paid_out = Payout.objects.filter(
+            creator=user, status='paid'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        available_balance = max(Decimal('0'), total_earnings - total_paid_out)
+
+        if amount > available_balance:
+            return Response({
+                'error': f'Requested payout (₹{amount:.2f}) exceeds available balance (₹{available_balance:.2f}).'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        payout = Payout.objects.create(
+            creator=user,
+            amount=amount,
+            notes=notes,
+            status='paid',
+            paid_at=timezone.now()
+        )
+
+        serializer = self.get_serializer(payout)
+        return Response({
+            'message': f'Payout of ₹{amount:.2f} auto-approved and processed successfully!',
+            'payout': serializer.data
+        }, status=status.HTTP_201_CREATED)
 
 
 class AdminPayoutListView(generics.ListAPIView):
@@ -540,10 +596,48 @@ class AdminReportListView(generics.ListAPIView):
         return qs
 
 
-class AdminReportActionView(generics.UpdateAPIView):
+class AdminReportActionView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
     permission_classes = [IsAdminUser]
+
+
+class AdminDeleteResourceView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request, pk):
+        try:
+            resource = Resource.objects.get(pk=pk)
+            title = resource.title
+
+            # Auto-refund ONLY current token owners (last holders) for their acquisition price
+            tokens = NFTToken.objects.filter(resource=resource).select_related('owner')
+            refund_count = 0
+            total_refunded = Decimal('0.00')
+
+            for token in tokens:
+                current_owner = token.owner
+                # Find the latest sale price paid by this current owner to acquire this token
+                last_sale = NFTSale.objects.filter(token=token, buyer=current_owner).order_by('-sold_at').first()
+                acquisition_price = last_sale.sale_price if last_sale else (token.paid_amount or resource.price)
+
+                Refund.objects.create(
+                    user=current_owner,
+                    resource_title=f"{title} (Token #{token.token_number})",
+                    amount=acquisition_price,
+                    reason=f"Resource '{title}' was removed by platform admin. Acquisition refund to current token holder @{current_owner.username}."
+                )
+                refund_count += 1
+                total_refunded += acquisition_price
+
+            resource.delete()
+            return Response({
+                'message': f'Resource "{title}" (ID: #{pk}) deleted successfully. Issued {refund_count} acquisition refunds to current token holders totaling ₹{total_refunded}.',
+                'refunds_count': refund_count,
+                'total_refunded': str(total_refunded),
+            }, status=status.HTTP_200_OK)
+        except Resource.DoesNotExist:
+            return Response({'error': 'Resource not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ── Dashboard stats ──
@@ -583,13 +677,20 @@ class UserStatsView(generics.GenericAPIView):
                 'sold_at': sale.sold_at.strftime('%b %d, %Y') if sale.sold_at else '',
             })
 
+        # Fetch refunds issued to this user
+        user_refunds = Refund.objects.filter(user=user).order_by('-created_at')
+        total_refunded = user_refunds.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        refunds_data = RefundSerializer(user_refunds, many=True).data
+
         data = {
             'items_owned': items_owned,
             'total_spent': str(total_spent),
             'primary_spent': str(primary_spent),
             'secondary_spent': str(secondary_spent),
+            'total_refunded': str(total_refunded),
             'wishlist_count': wishlist_count,
             'purchases': purchases_data,
+            'refunds': refunds_data,
         }
         return Response(data)
 
@@ -598,21 +699,39 @@ class AdminStatsView(generics.GenericAPIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        # MERGE: total_revenue now sourced from NFTSale.creator_earnings (primary sales)
-        # This is the canonical revenue figure — what creators actually earned
-        from django.db.models import DecimalField
-        revenue_agg = NFTSale.objects.filter(sale_type='primary').aggregate(
-            total=Sum('creator_earnings')
-        )
+        all_sales = NFTSale.objects.all()
+
+        total_transaction_volume = all_sales.aggregate(
+            total=Sum('sale_price')
+        )['total'] or Decimal('0')
+
+        # 5% website service charge variable for every transaction
+        website_service_charge = (total_transaction_volume * Decimal('0.05')).quantize(Decimal('0.01'))
+
+        total_sales_count = all_sales.count()
+        primary_sales_count = all_sales.filter(sale_type='primary').count()
+        secondary_sales_count = all_sales.filter(sale_type='secondary').count()
+
+        total_paid_out = Payout.objects.filter(
+            status='paid'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
         data = {
             'total_users': User.objects.count(),
             'total_creators': User.objects.filter(profile__status='creator').count(),
             'total_resources': Resource.objects.count(),
-            'total_revenue': revenue_agg['total'] or 0,
+            'total_revenue': str(website_service_charge),
+            'website_service_charge': str(website_service_charge),
+            'total_transaction_volume': str(total_transaction_volume),
+            'total_sales_count': total_sales_count,
+            'primary_sales_count': primary_sales_count,
+            'secondary_sales_count': secondary_sales_count,
             'total_tokens_minted': NFTToken.objects.count(),
+            'total_paid_out': str(total_paid_out),
             'open_reports': Report.objects.filter(status='open').count(),
             'pending_payouts': Payout.objects.filter(status='requested').count(),
         }
+        return Response(data)
 
 class ToggleResourceSaleView(APIView):
     permission_classes = [IsAuthenticated]
