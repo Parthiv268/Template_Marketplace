@@ -74,73 +74,66 @@ function LibraryPage() {
     );
 
     return (
+        /* CHANGES TO FRONTEND — LibraryPage: Futuristic Quantum Vault Container */
         <div style={{
             minHeight: '100vh',
-            background: 'var(--bg-page)',
-            padding: '40px 32px',
+            padding: '32px 24px 80px',
             fontFamily: 'var(--font)',
         }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
                 {/* Page header */}
-                <div style={{ marginBottom: '32px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-                        <h1 style={{
-                            fontSize: '28px', fontWeight: 800,
-                            color: 'var(--text-primary)', margin: 0,
-                            letterSpacing: '-0.02em',
-                        }}>My Collection</h1>
+                <div className="glass-panel" style={{
+                    padding: '40px 36px',
+                    borderRadius: '24px',
+                    marginBottom: '36px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(15, 17, 26, 0.85) 60%)',
+                    border: '1px solid rgba(6, 182, 212, 0.3)',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                        <span className="badge-cyan">❖ QUANTUM VAULT & LIBRARY</span>
                         <span style={{
-                            background: 'var(--bg-elevated)', color: 'var(--text-muted)',
-                            fontSize: '12px', padding: '3px 10px', borderRadius: '99px',
-                            border: '1px solid var(--border-subtle)',
-                        }}>{tokens.length} token{tokens.length !== 1 ? 's' : ''}</span>
+                            background: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-secondary)',
+                            fontSize: '12px', padding: '3px 12px', borderRadius: '99px',
+                            border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 600,
+                        }}>{tokens.length} Active Token{tokens.length !== 1 ? 's' : ''}</span>
                     </div>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-                        Tokens you currently hold. Owning a token gives you download access.
-                        Selling a token transfers both ownership and access to the buyer.
+                    <h1 className="font-heading" style={{
+                        fontSize: '34px', fontWeight: 800,
+                        color: '#ffffff', margin: '0 0 10px',
+                        letterSpacing: '-0.03em',
+                    }}>
+                        My Digital <span className="text-gradient-neon">Asset Collection</span>
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '640px', margin: 0 }}>
+                        All NFT tokens currently held in your wallet. Active token ownership unlocks permanent cloud download privileges and resale capability.
                     </p>
                 </div>
 
                 {/* Empty state */}
                 {tokens.length === 0 ? (
-                    <div style={{
+                    <div className="glass-panel" style={{
                         textAlign: 'center', padding: '80px 40px',
-                        border: '1px dashed var(--border-default)',
-                        borderRadius: '16px',
+                        borderRadius: '24px',
                     }}>
-                        <div style={{ fontSize: '40px', marginBottom: '12px' }}>⬡</div>
-                        <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, margin: '0 0 8px' }}>
-                            No tokens yet
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⬡</div>
+                        <h3 className="font-heading" style={{ color: '#ffffff', fontWeight: 700, fontSize: '22px', margin: '0 0 8px' }}>
+                            Your Digital Collection is Empty
                         </h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 24px' }}>
-                            Buy a resource from the marketplace to mint your first token.
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 28px', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
+                            Acquire software assets from the primary marketplace or secondary resale market to mint your first NFT token.
                         </p>
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                             <button
                                 onClick={() => navigate('/marketplace')}
-                                onMouseEnter={e => { e.currentTarget.style.background = '#e4e4e7'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                                style={{
-                                    padding: '10px 24px', background: '#ffffff', color: '#000000',
-                                    border: 'none', borderRadius: '10px', cursor: 'pointer',
-                                    fontSize: '14px', fontWeight: 700, fontFamily: 'var(--font)',
-                                    transition: 'all 0.15s ease',
-                                }}
-                            >Browse Marketplace</button>
+                                className="btn-glow"
+                            >Browse Marketplace →</button>
                             <button
                                 onClick={() => navigate('/resale-market')}
-                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(167,139,250,0.2)'; e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(167,139,250,0.08)'; e.currentTarget.style.borderColor = 'rgba(167,139,250,0.25)'; }}
-                                style={{
-                                    padding: '10px 24px',
-                                    background: 'rgba(167,139,250,0.08)', color: '#a78bfa',
-                                    border: '1px solid rgba(167,139,250,0.25)',
-                                    borderRadius: '10px', cursor: 'pointer',
-                                    fontSize: '14px', fontWeight: 700, fontFamily: 'var(--font)',
-                                    transition: 'all 0.15s ease',
-                                }}
-                            >⬡ Browse Resale Market</button>
+                                className="btn-glass"
+                            >Explore Resale Market →</button>
                         </div>
                     </div>
                 ) : (

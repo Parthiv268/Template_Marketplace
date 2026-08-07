@@ -13,6 +13,7 @@ import NFTDashboardPage from './components/NFTDashboardPage';
 import UserDashboard from './components/UserDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import ResaleMarketplacePage from './components/ResaleMarketplacePage';
+import LandingPage from './components/LandingPage';
 import { getProfile } from './api.js';
 
 function App() {
@@ -58,9 +59,16 @@ function App() {
 
   return (
     <BrowserRouter>
+      {/* CHANGES TO FRONTEND — Render futuristic background layer with aurora lighting and grid mesh */}
+      <div className="futuristic-bg">
+        <div className="bg-grid-mesh" />
+      </div>
+
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} profile={profile} theme={theme} toggleTheme={toggleTheme} />
       <Routes>
-        <Route path="/login" element={isLoggedIn ? <Navigate to="/profile" /> : <AuthPage setIsLoggedIn={handleLoginSuccess} />} />
+        {/* CHANGES TO FRONTEND — Public Landing Page at route / and login redirects to / */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <AuthPage setIsLoggedIn={handleLoginSuccess} />} />
         <Route path="/profile" element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/resources/:id" element={<ResourceDetailPage />} />
@@ -78,8 +86,6 @@ function App() {
           path="/dashboard/admin"
           element={isLoggedIn && profile?.is_staff ? <AdminDashboard /> : <Navigate to="/dashboard/user" />}
         />
-
-        <Route path="/" element={<Navigate to={isLoggedIn ? "/profile" : "/login"} />} />
       </Routes>
     </BrowserRouter>
   );

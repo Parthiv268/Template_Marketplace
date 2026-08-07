@@ -316,20 +316,20 @@ function ResourceDetailPage() {
 
                 {/* ── NFT Token Info Panel ──────────────────────────── */}
                 {nftStatus && (
-                    /* CHANGES TO FRONTEND — ResourceDetailPage: NFT panel with dark surface */
-                    <div style={{
-                        background: 'var(--bg-surface)',
-                        border: '1px solid var(--border-default)',
-                        borderRadius: '14px', padding: '20px',
-                        marginBottom: '24px',
+                    /* CHANGES TO FRONTEND — ResourceDetailPage: Futuristic NFT Glass Panel */
+                    <div className="glass-panel" style={{
+                        padding: '24px',
+                        marginBottom: '28px',
+                        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(15, 17, 26, 0.75) 100%)',
+                        border: '1px solid rgba(124, 58, 237, 0.25)',
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                             <div>
-                                <p style={{ color: 'var(--nft)', fontWeight: 700, margin: '0 0 4px', fontSize: '14px' }}>
-                                    ⬡ NFT Collection
+                                <p className="font-heading" style={{ color: '#c084fc', fontWeight: 700, margin: '0 0 4px', fontSize: '15px' }}>
+                                    ⬡ Verified NFT Smart Collection
                                 </p>
-                                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '12px' }}>
-                                    {resource.royalty_percent}% royalty routes to creator on every resale
+                                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '13px' }}>
+                                    {resource.royalty_percent}% perpetual royalty automatically routes to creator on secondary resales
                                 </p>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>

@@ -63,7 +63,7 @@ function Navbar({ isLoggedIn, setIsLoggedIn, profile, theme, toggleTheme }) {
   /* CHANGES TO FRONTEND — Navbar: helper to check active route */
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
-  /* CHANGES TO FRONTEND — Navbar: nav button with hover + active state */
+  /* CHANGES TO FRONTEND — Navbar: compact & high-visibility apparent nav button */
   const NavBtn = ({ path, label, id }) => {
     const active = isActive(path);
     const hovered = hoveredBtn === id;
@@ -74,76 +74,95 @@ function Navbar({ isLoggedIn, setIsLoggedIn, profile, theme, toggleTheme }) {
         onMouseEnter={() => setHoveredBtn(id)}
         onMouseLeave={() => setHoveredBtn(null)}
         style={{
-          background: 'transparent',
-          color: active ? 'var(--text-primary)' : hovered ? 'var(--text-primary)' : 'var(--text-secondary)',
-          border: 'none',
+          background: active ? 'rgba(124, 58, 237, 0.25)' : hovered ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+          color: active ? '#ffffff' : hovered ? '#ffffff' : '#cbd5e1',
+          border: active ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid transparent',
+          borderRadius: '8px',
+          padding: '4px 10px',
           cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: active ? 600 : 400,
+          fontSize: '12.5px',
+          fontWeight: active ? 700 : 500,
           fontFamily: 'var(--font)',
-          padding: '6px 2px',
           position: 'relative',
-          transition: 'color 0.15s ease',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           letterSpacing: '0.01em',
+          whiteSpace: 'nowrap',
         }}
       >
         {label}
-        {/* CHANGES TO FRONTEND — Navbar: animated underline for active/hover state */}
-        <span style={{
-          position: 'absolute',
-          bottom: '-2px',
-          left: 0,
-          width: active ? '100%' : hovered ? '100%' : '0%',
-          height: '1.5px',
-          background: active ? 'var(--text-primary)' : 'var(--border-strong)',
-          borderRadius: '99px',
-          transition: 'width 0.2s ease, background 0.2s ease',
-        }} />
+        {active && (
+          <span style={{
+            position: 'absolute',
+            bottom: '1px',
+            left: '15%',
+            right: '15%',
+            height: '2px',
+            background: 'linear-gradient(90deg, #7c3aed, #06b6d4)',
+            borderRadius: '99px',
+            boxShadow: '0 0 8px #06b6d4',
+          }} />
+        )}
       </button>
     );
   };
 
   return (
     <>
+      {/* CHANGES TO FRONTEND — Navbar: Full-Width Edge-to-Edge Top Header Bar */}
       <nav style={{
-        padding: '0 32px',
-        height: '56px',
-        background: 'var(--bg-surface)',
-        borderBottom: '1px solid var(--border-subtle)',
+        position: 'sticky',
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        margin: 0,
+        padding: '0 28px',
+        height: '52px',
+        background: 'rgba(10, 11, 20, 0.92)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(124, 58, 237, 0.35)',
+        boxShadow: '0 4px 25px rgba(0, 0, 0, 0.8), 0 0 20px rgba(124, 58, 237, 0.2)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backdropFilter: 'blur(12px)',
+        zIndex: 1000,
       }}>
-        {/* CHANGES TO FRONTEND — Navbar: logo glows white on hover */}
+        {/* CHANGES TO FRONTEND — Navbar: compact high-visibility logo */}
         <span
           id="nav-logo"
           onClick={() => navigate('/')}
           onMouseEnter={e => {
-            e.currentTarget.style.textShadow = 'var(--shadow-white)';
-            e.currentTarget.style.color = 'var(--text-primary)';
+            e.currentTarget.style.textShadow = '0 0 15px rgba(6, 182, 212, 0.6)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.textShadow = 'none';
-            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           style={{
-            color: 'var(--text-primary)',
-            fontWeight: 700,
-            fontSize: '18px',
+            color: '#ffffff',
+            fontWeight: 800,
+            fontSize: '17px',
             cursor: 'pointer',
-            letterSpacing: '-0.02em',
-            transition: 'color 0.15s ease, text-shadow 0.15s ease',
+            letterSpacing: '-0.03em',
+            fontFamily: 'var(--font-heading)',
+            transition: 'all 0.2s ease',
             userSelect: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexShrink: 0,
           }}
         >
+          <span style={{
+            width: '24px', height: '24px', borderRadius: '6px',
+            background: 'var(--accent-gradient)', display: 'inline-flex',
+            alignItems: 'center', justifyContent: 'center', fontSize: '12px',
+            boxShadow: '0 0 10px rgba(124, 58, 237, 0.5)',
+          }}>❖</span>
           DevVault
         </span>
 
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', overflowX: 'auto', padding: '2px 0' }}>
           {/* CHANGES TO FRONTEND — Navbar: Marketplace always visible */}
           <NavBtn path="/marketplace"   label="Marketplace"    id="marketplace" />
           {/* CHANGES TO FRONTEND — Navbar: Resale Market always visible (secondary NFT market) */}

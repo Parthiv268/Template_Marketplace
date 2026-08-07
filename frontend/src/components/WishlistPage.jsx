@@ -57,50 +57,56 @@ function WishlistPage() {
     );
 
     return (
-        /* CHANGES TO FRONTEND — WishlistPage: dark page wrapper */
+        /* CHANGES TO FRONTEND — WishlistPage: Futuristic Container */
         <div style={{
             minHeight: '100vh',
-            background: 'var(--bg-page)',
-            padding: '40px 32px',
+            padding: '32px 24px 80px',
             fontFamily: 'var(--font)',
         }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
                 {/* CHANGES TO FRONTEND — WishlistPage: page header */}
-                <h1 style={{
-                    fontSize: '28px', fontWeight: 800,
-                    color: 'var(--text-primary)', margin: '0 0 6px',
-                    letterSpacing: '-0.02em',
-                }}>My Wishlist</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>
-                    {wishlist.length} saved item{wishlist.length !== 1 ? 's' : ''}
-                </p>
+                <div className="glass-panel" style={{
+                    padding: '36px 32px',
+                    borderRadius: '24px',
+                    marginBottom: '36px',
+                    background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.12) 0%, rgba(15, 17, 26, 0.85) 60%)',
+                    border: '1px solid rgba(236, 72, 153, 0.3)',
+                }}>
+                    <span className="badge-neon" style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#f472b6', borderColor: 'rgba(236, 72, 153, 0.3)', marginBottom: '8px' }}>
+                        ♥ SAVED QUANTUM ASSETS
+                    </span>
+                    <h1 className="font-heading" style={{
+                        fontSize: '32px', fontWeight: 800,
+                        color: '#ffffff', margin: '0 0 6px',
+                        letterSpacing: '-0.03em',
+                    }}>
+                        My <span className="text-gradient-neon">Wishlist Vault</span>
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
+                        {wishlist.length} saved asset{wishlist.length !== 1 ? 's' : ''} bookmarked for quick acquisition.
+                    </p>
+                </div>
 
                 {/* CHANGES TO FRONTEND — WishlistPage: empty state */}
                 {wishlist.length === 0 ? (
-                    <div className="empty-state">
-                        <h3>Your wishlist is empty</h3>
-                        <p style={{ marginBottom: '20px' }}>Save resources you want to come back to.</p>
+                    <div className="glass-panel" style={{ textAlign: 'center', padding: '80px 40px', borderRadius: '24px' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>♥</div>
+                        <h3 className="font-heading" style={{ fontSize: '22px', color: '#fff', marginBottom: '8px' }}>Your Wishlist Vault is Empty</h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '28px' }}>Bookmark templates, code assets, and NFTs from the marketplace to keep track of them here.</p>
                         <button
                             id="wishlist-browse-btn"
                             onClick={() => navigate('/marketplace')}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#e4e4e7'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                            style={{
-                                padding: '9px 24px', background: '#ffffff', color: '#000000',
-                                border: 'none', borderRadius: '8px', cursor: 'pointer',
-                                fontSize: '14px', fontWeight: 600, fontFamily: 'var(--font)',
-                                transition: 'all 0.15s ease',
-                            }}
+                            className="btn-glow"
                         >
-                            Browse Marketplace
+                            Explore Marketplace →
                         </button>
                     </div>
                 ) : (
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(268px, 1fr))',
-                        gap: '20px',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+                        gap: '24px',
                     }}>
                         {wishlist.map(item => (
                             <WishlistCard

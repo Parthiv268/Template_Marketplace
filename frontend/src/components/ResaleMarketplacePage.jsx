@@ -67,103 +67,94 @@ function ResaleMarketplacePage() {
         : 0;
 
     return (
+        /* CHANGES TO FRONTEND — ResaleMarketplacePage: Futuristic Container */
         <div style={{
             minHeight: '100vh',
-            background: 'var(--bg-page)',
-            padding: '40px 32px',
+            padding: '32px 24px 80px',
             fontFamily: 'var(--font)',
         }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
-                {/* Header */}
-                <div style={{ marginBottom: '32px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-                        <h1 style={{
-                            fontSize: '28px', fontWeight: 800,
-                            color: 'var(--text-primary)', margin: 0,
-                            letterSpacing: '-0.02em',
-                        }}>Secondary Market</h1>
+                {/* Header Banner */}
+                <div className="glass-panel" style={{
+                    padding: '40px 36px',
+                    borderRadius: '24px',
+                    marginBottom: '36px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(15, 17, 26, 0.85) 60%)',
+                    border: '1px solid rgba(124, 58, 237, 0.3)',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                        <span className="badge-neon">⬡ SECONDARY NFT MARKET</span>
                         <span style={{
-                            background: 'var(--nft-dim)', color: 'var(--nft)',
-                            border: '1px solid rgba(167,139,250,0.3)',
-                            fontSize: '11px', fontWeight: 700,
-                            padding: '3px 10px', borderRadius: '99px',
-                        }}>⬡ NFT Resale</span>
-                        <span style={{
-                            background: 'var(--bg-elevated)', color: 'var(--text-muted)',
-                            fontSize: '12px', padding: '3px 10px', borderRadius: '99px',
-                            border: '1px solid var(--border-subtle)',
-                        }}>{listings.length} listed</span>
+                            background: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-secondary)',
+                            fontSize: '12px', padding: '3px 12px', borderRadius: '99px',
+                            border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 600,
+                        }}>{listings.length} Tokens Active</span>
                     </div>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-                        Buy tokens from other holders. The original creator automatically earns their royalty on every sale.
+                    <h1 className="font-heading" style={{
+                        fontSize: '34px', fontWeight: 800,
+                        color: '#ffffff', margin: '0 0 10px',
+                        letterSpacing: '-0.03em',
+                    }}>
+                        Peer-to-Peer <span className="text-gradient-neon">NFT Resale Market</span>
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '15px', maxWidth: '640px', margin: 0 }}>
+                        Buy tokenized digital assets directly from existing holders. Automatic smart royalties reward original creators on every resale transaction.
                     </p>
                 </div>
 
                 {/* Success banner */}
                 {successMsg && (
                     <div style={{
-                        background: 'rgba(34,197,94,0.08)',
-                        border: '1px solid rgba(34,197,94,0.25)',
-                        borderRadius: '12px', padding: '16px 20px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        borderRadius: '16px', padding: '20px 24px',
                         marginBottom: '28px', display: 'flex',
                         justifyContent: 'space-between', alignItems: 'center',
-                        gap: '16px',
+                        gap: '16px', backdropFilter: 'blur(12px)',
                     }}>
                         <div>
-                            <p style={{ color: 'var(--green)', fontWeight: 700, margin: '0 0 4px', fontSize: '14px' }}>
+                            <p style={{ color: '#10b981', fontWeight: 700, margin: '0 0 4px', fontSize: '15px' }}>
                                 ✓ {successMsg.message}
                             </p>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0 }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
                                 Royalty paid to creator: ₹{successMsg.royalty_paid_to_creator} &nbsp;·&nbsp; Seller received: ₹{successMsg.seller_received}
                             </p>
                         </div>
                         <button
                             onClick={() => { setSuccessMsg(null); navigate('/library'); }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#e4e4e7'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; }}
-                            style={{
-                                padding: '7px 16px', background: '#ffffff', color: '#000000',
-                                border: 'none', borderRadius: '8px', cursor: 'pointer',
-                                fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font)',
-                                transition: 'all 0.15s ease', flexShrink: 0,
-                            }}
-                        >View in Library</button>
+                            className="btn-glow"
+                            style={{ padding: '8px 20px', fontSize: '13px' }}
+                        >View in My Library →</button>
                     </div>
                 )}
 
                 {/* Empty state */}
                 {listings.length === 0 ? (
-                    <div style={{
+                    <div className="glass-panel" style={{
                         textAlign: 'center', padding: '80px 40px',
-                        border: '1px dashed var(--border-default)',
-                        borderRadius: '16px',
+                        borderRadius: '24px',
                     }}>
-                        <div style={{ fontSize: '40px', marginBottom: '12px' }}>⬡</div>
-                        <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, margin: '0 0 8px' }}>
-                            No tokens listed for resale
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⬡</div>
+                        <h3 className="font-heading" style={{ color: '#ffffff', fontWeight: 700, fontSize: '22px', margin: '0 0 8px' }}>
+                            No Tokens Currently Listed for Resale
                         </h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 24px' }}>
-                            When token holders list their NFTs for resale, they will appear here.
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 28px', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
+                            When NFT token holders list their owned assets for secondary sale, they will instantly populate in this live registry.
                         </p>
                         <button
                             onClick={() => navigate('/marketplace')}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#e4e4e7'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                            style={{
-                                padding: '10px 24px', background: '#ffffff', color: '#000000',
-                                border: 'none', borderRadius: '10px', cursor: 'pointer',
-                                fontSize: '14px', fontWeight: 700, fontFamily: 'var(--font)',
-                                transition: 'all 0.15s ease',
-                            }}
-                        >Browse Primary Marketplace</button>
+                            className="btn-glow"
+                        >Browse Primary Marketplace →</button>
                     </div>
                 ) : (
                     /* Card grid */
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                        gap: '20px',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+                        gap: '24px',
                     }}>
                         {listings.map(token => (
                             <ResaleCard

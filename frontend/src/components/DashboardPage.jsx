@@ -129,24 +129,38 @@ function DashboardPage() {
     };
 
     return (
-        /* CHANGES TO FRONTEND — DashboardPage: dark page wrapper */
+        /* CHANGES TO FRONTEND — DashboardPage: Full-width dark page wrapper */
         <div style={{
-            minHeight: '100vh',
-            background: 'var(--bg-page)',
-            padding: '40px 32px',
+            minHeight: 'calc(100vh - 70px)',
+            padding: '32px 40px 80px',
             fontFamily: 'var(--font)',
+            width: '100%',
         }}>
-            <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '100%', width: '100%' }}>
 
-                {/* CHANGES TO FRONTEND — DashboardPage: header */}
-                <h1 style={{
-                    fontSize: '28px', fontWeight: 800,
-                    color: 'var(--text-primary)', margin: '0 0 4px',
-                    letterSpacing: '-0.02em',
-                }}>Creator Dashboard</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>
-                    Welcome back, <b style={{ color: 'var(--text-primary)' }}>{profile?.username}</b>
-                </p>
+        <div className="glass-panel" style={{
+          padding: '36px 40px',
+          borderRadius: '24px',
+          marginBottom: '36px',
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(15, 17, 26, 0.85) 60%)',
+          border: '1px solid rgba(124, 58, 237, 0.35)',
+          boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(124, 58, 237, 0.25)',
+        }}>
+          <span className="badge-neon" style={{ marginBottom: '8px' }}>
+            ❖ CREATOR STUDIO
+          </span>
+          <h1 className="font-heading" style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '34px', fontWeight: 800,
+            color: '#ffffff', margin: '0 0 8px',
+            letterSpacing: '-0.03em',
+          }}>
+            Creator <span className="text-gradient-neon">Dashboard</span>
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 }}>
+            Welcome back, <b style={{ color: '#ffffff' }}>@{profile?.username}</b>. Manage your uploaded digital software assets, track potential revenue, and access NFT analytics.
+          </p>
+        </div>
 
                 {/* CHANGES TO FRONTEND — DashboardPage: stat cards grid */}
                 <div style={{

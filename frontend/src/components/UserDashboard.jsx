@@ -24,42 +24,50 @@ function UserDashboard() {
   const purchases = stats?.purchases || [];
 
   return (
+    /* CHANGES TO FRONTEND — UserDashboard: Futuristic Glass Container */
     <div style={{
       minHeight: '100vh',
-      background: 'var(--bg-page)',
-      padding: '40px 32px 60px',
+      padding: '32px 24px 80px',
       fontFamily: 'var(--font)',
     }}>
-      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+        <div className="glass-panel" style={{
+          padding: '36px 32px',
+          borderRadius: '24px',
+          marginBottom: '32px',
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(15, 17, 26, 0.85) 60%)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '20px',
+        }}>
           <div>
-            <h1 style={{
-              fontSize: '28px', fontWeight: 800,
-              color: 'var(--text-primary)', margin: '0 0 6px',
-              letterSpacing: '-0.02em',
-            }}>User Dashboard & Money Spent</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-              Track your total expenditure, primary mints, secondary market resales, and acquisition history.
+            <span className="badge-cyan" style={{ marginBottom: '8px' }}>
+              📊 FINANCIAL ANALYTICS & ACCOUNTING
+            </span>
+            <h1 className="font-heading" style={{
+              fontSize: '32px', fontWeight: 800,
+              color: '#ffffff', margin: '0 0 6px',
+              letterSpacing: '-0.03em',
+            }}>
+              User Dashboard & <span className="text-gradient-neon">Expenditure Log</span>
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 }}>
+              Track your total software expenditure, primary mints, secondary market resales, and verified refunds.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
             <button
               onClick={() => navigate('/nft-dashboard')}
-              style={{
-                padding: '9px 18px', background: 'var(--bg-surface)',
-                color: 'var(--text-primary)', border: '1px solid var(--border-default)',
-                borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
-              }}
-            >Creator Dashboard →</button>
+              className="btn-glow"
+            >NFT Dashboard →</button>
             <button
               onClick={() => navigate('/library')}
-              style={{
-                padding: '9px 18px', background: 'var(--bg-surface)',
-                color: 'var(--text-primary)', border: '1px solid var(--border-default)',
-                borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
-              }}
-            >View My Library →</button>
+              className="btn-glass"
+            >View My Vault →</button>
           </div>
         </div>
 

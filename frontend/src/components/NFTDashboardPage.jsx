@@ -37,27 +37,24 @@ function shortDate(d) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+/* CHANGES TO FRONTEND — Stylistic Glass StatCard with Heading Typography */
 function StatCard({ label, value, sub, color, icon }) {
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: '16px',
+    <div className="glass-card" style={{
       padding: '24px',
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
-      backdropFilter: 'blur(8px)',
       position: 'relative',
       overflow: 'hidden',
     }}>
       <div style={{
-        position: 'absolute', top: '-20px', right: '-20px',
-        fontSize: '80px', opacity: 0.06, lineHeight: 1,
+        position: 'absolute', top: '-15px', right: '-15px',
+        fontSize: '72px', opacity: 0.08, lineHeight: 1, pointerEvents: 'none',
       }}>{icon}</div>
-      <p style={{ color: COLORS.muted, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>{label}</p>
-      <p style={{ color: color || COLORS.text, fontSize: '28px', fontWeight: 700, margin: 0 }}>{value}</p>
-      {sub && <p style={{ color: COLORS.muted, fontSize: '12px', margin: 0 }}>{sub}</p>}
+      <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>{label}</p>
+      <p className="font-heading" style={{ color: color || '#ffffff', fontSize: '28px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
+      {sub && <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: 0 }}>{sub}</p>}
     </div>
   );
 }
@@ -324,45 +321,79 @@ function NFTDashboardPage() {
 
   return (
     <div style={styles.page}>
-      {/* Header */}
-      <div style={styles.header}>
+      {/* CHANGES TO FRONTEND — Creator Studio Glass Panel Header Banner */}
+      <div className="glass-panel" style={{
+        padding: '36px 40px',
+        borderRadius: '24px',
+        marginBottom: '32px',
+        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(15, 17, 26, 0.85) 60%)',
+        border: '1px solid rgba(124, 58, 237, 0.35)',
+        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(124, 58, 237, 0.25)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '20px',
+        width: '100%',
+      }}>
         <div>
-          <div style={styles.headerBadge}>⬡ NFT Creator Dashboard</div>
-          <h1 style={styles.title}>Token Analytics & Payouts</h1>
-          <p style={styles.subtitle}>Track every mint, resale, royalty, and withdraw your creator earnings.</p>
+          <span className="badge-neon" style={{ marginBottom: '8px' }}>
+            ❖ NFT CREATOR STUDIO & ANALYTICS
+          </span>
+          {/* CHANGES TO FRONTEND — Creator Dashboard heading matching font color & neon gradient of other pages */}
+          <h1 className="font-heading" style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '34px', fontWeight: 800,
+            color: '#ffffff', margin: '0 0 10px',
+            letterSpacing: '-0.03em',
+          }}>
+            Creator <span className="text-gradient-neon">Dashboard</span>
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 }}>
+            Track real-time token mints, secondary market royalties, creator earnings, and withdraw payouts.
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={() => setShowPayoutModal(true)}
-            style={{
-              padding: '10px 20px', background: '#f59e0b', color: '#000000',
-              border: 'none', borderRadius: '10px', cursor: 'pointer',
-              fontWeight: 700, fontSize: '13px', fontFamily: 'var(--font)',
-              transition: 'all 0.15s ease', shadow: '0 2px 8px rgba(245,158,11,0.3)',
-            }}
+            className="btn-glow"
+            style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', boxShadow: '0 4px 20px rgba(245, 158, 11, 0.4)' }}
           >
             💰 Request Payout
           </button>
-          <button onClick={() => navigate('/upload')} style={styles.uploadBtn}>
+          <button onClick={() => navigate('/upload')} className="btn-glow">
             + New Collection
           </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={styles.tabs}>
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              ...styles.tab,
-              ...(activeTab === tab ? styles.tabActive : {}),
-            }}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+      {/* CHANGES TO FRONTEND — Stylistic Tabs Navigation */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '28px', paddingBottom: '10px', overflowX: 'auto' }}>
+        {tabs.map(tab => {
+          const active = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: active ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid transparent',
+                background: active ? 'var(--accent-gradient)' : 'transparent',
+                color: active ? '#ffffff' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: active ? 700 : 500,
+                fontFamily: 'var(--font)',
+                boxShadow: active ? '0 0 15px rgba(124, 58, 237, 0.4)' : 'none',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── OVERVIEW TAB ────────────────────────────── */}
@@ -1004,14 +1035,15 @@ function TokenCard({ token, onRefresh }) {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = {
+  /* CHANGES TO FRONTEND — Full-width NFT Marketplace Dashboard & Single Horizontal Row Stat Cards */
   page: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0a0118 0%, #0d0d1f 40%, #0a0118 100%)',
-    padding: '32px 24px 60px',
-    fontFamily: '"Inter", -apple-system, sans-serif',
+    padding: '32px 40px 80px',
+    fontFamily: 'var(--font)',
     color: COLORS.text,
-    maxWidth: '1200px',
-    margin: '0 auto',
+    width: '100%',
+    maxWidth: '100%',
+    margin: 0,
   },
   header: {
     display: 'flex',
@@ -1075,24 +1107,28 @@ const styles = {
     color: '#a78bfa',
     borderBottomColor: '#7c3aed',
   },
-  section: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  section: { display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' },
+  /* CHANGES TO FRONTEND — Stat cards in single horizontal line */
   statsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '16px',
+    width: '100%',
   },
   card: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: '16px',
-    padding: '24px',
-    backdropFilter: 'blur(8px)',
+    background: 'rgba(15, 17, 26, 0.65)',
+    backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '20px',
+    padding: '28px',
+    boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
   },
   cardTitle: {
-    color: COLORS.text,
+    color: '#ffffff',
     fontWeight: 700,
-    fontSize: '16px',
+    fontSize: '18px',
     margin: '0 0 20px',
+    fontFamily: 'var(--font-heading)',
   },
   table: {
     width: '100%',
@@ -1100,18 +1136,18 @@ const styles = {
     fontSize: '13px',
   },
   th: {
-    color: COLORS.muted,
+    color: 'var(--text-muted)',
     fontWeight: 600,
     fontSize: '11px',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
-    padding: '10px 12px',
+    padding: '12px 14px',
     textAlign: 'left',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
   },
   td: {
-    color: COLORS.muted,
-    padding: '12px 12px',
+    color: 'var(--text-secondary)',
+    padding: '14px 14px',
     borderBottom: '1px solid rgba(255,255,255,0.04)',
     cursor: 'pointer',
   },
@@ -1123,8 +1159,7 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #0a0118, #0d0d1f)',
-    fontFamily: '"Inter", sans-serif',
+    fontFamily: 'var(--font)',
   },
   spinner: {
     width: '40px',
@@ -1136,13 +1171,14 @@ const styles = {
   },
   refreshBtn: {
     marginTop: '12px',
-    background: '#7c3aed',
+    background: 'var(--accent-gradient)',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
-    padding: '8px 20px',
+    borderRadius: '10px',
+    padding: '10px 24px',
     cursor: 'pointer',
     fontSize: '14px',
+    fontWeight: 700,
   },
 };
 

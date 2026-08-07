@@ -110,67 +110,83 @@ function AdminDashboard() {
   );
 
   return (
-    /* CHANGES TO FRONTEND — AdminDashboard: dark page wrapper */
+    /* CHANGES TO FRONTEND — AdminDashboard: Futuristic Glass Container */
     <div style={{
       minHeight: '100vh',
-      background: 'var(--bg-page)',
-      padding: '40px 32px',
+      padding: '32px 24px 80px',
       fontFamily: 'var(--font)',
     }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1 style={{
-              fontSize: '28px', fontWeight: 800,
-              color: 'var(--text-primary)', margin: 0,
-              letterSpacing: '-0.02em',
-            }}>Admin Control Center</h1>
+        {/* Header Banner */}
+        <div className="glass-panel" style={{
+          padding: '36px 32px',
+          borderRadius: '24px',
+          marginBottom: '32px',
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(15, 17, 26, 0.85) 60%)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '20px',
+        }}>
+          <div>
             <span style={{
-              background: 'rgba(239,68,68,0.12)', color: '#fca5a5',
-              border: '1px solid rgba(239,68,68,0.25)',
-              fontSize: '11px', fontWeight: 700, padding: '3px 10px',
-              borderRadius: '99px', letterSpacing: '0.5px',
-            }}>⚙ STAFF</span>
+              background: 'rgba(239,68,68,0.15)', color: '#f87171',
+              border: '1px solid rgba(239,68,68,0.3)',
+              fontSize: '11px', fontWeight: 700, padding: '4px 12px',
+              borderRadius: '99px', letterSpacing: '0.5px', display: 'inline-flex',
+              alignItems: 'center', gap: '6px', marginBottom: '8px',
+            }}>⚙ SUPERADMIN CONTROL CENTER</span>
+            <h1 className="font-heading" style={{
+              fontSize: '32px', fontWeight: 800,
+              color: '#ffffff', margin: '0 0 6px',
+              letterSpacing: '-0.03em',
+            }}>
+              Platform <span className="text-gradient-neon">Moderation & Payouts</span>
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', margin: 0 }}>
+              Manage creator payout requests, moderate platform software resources, and resolve user complaint reports.
+            </p>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveTab('overview')}
             style={{
-              padding: '9px 18px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              padding: '10px 22px', borderRadius: '12px', border: 'none', cursor: 'pointer',
               fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font)',
-              background: activeTab === 'overview' ? '#ffffff' : 'var(--bg-surface)',
-              color: activeTab === 'overview' ? '#000000' : 'var(--text-secondary)',
-              boxShadow: activeTab === 'overview' ? '0 2px 8px rgba(255,255,255,0.15)' : 'none',
-              transition: 'all 0.15s ease',
+              background: activeTab === 'overview' ? 'var(--accent-gradient)' : 'rgba(255, 255, 255, 0.06)',
+              color: activeTab === 'overview' ? '#ffffff' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'overview' ? '0 0 20px rgba(124, 58, 237, 0.4)' : 'none',
+              transition: 'all 0.2s ease',
             }}
           >📊 Overview & Payouts</button>
 
           <button
             onClick={() => setActiveTab('resources')}
             style={{
-              padding: '9px 18px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              padding: '10px 22px', borderRadius: '12px', border: 'none', cursor: 'pointer',
               fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font)',
-              background: activeTab === 'resources' ? '#ef4444' : 'var(--bg-surface)',
+              background: activeTab === 'resources' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'rgba(255, 255, 255, 0.06)',
               color: activeTab === 'resources' ? '#ffffff' : 'var(--text-secondary)',
-              boxShadow: activeTab === 'resources' ? '0 2px 8px rgba(239,68,68,0.3)' : 'none',
-              transition: 'all 0.15s ease',
+              boxShadow: activeTab === 'resources' ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none',
+              transition: 'all 0.2s ease',
             }}
           >📦 Resource Moderation ({allResources.length})</button>
 
           <button
             onClick={() => setActiveTab('reports')}
             style={{
-              padding: '9px 18px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              padding: '10px 22px', borderRadius: '12px', border: 'none', cursor: 'pointer',
               fontSize: '13px', fontWeight: 700, fontFamily: 'var(--font)',
-              background: activeTab === 'reports' ? '#3b82f6' : 'var(--bg-surface)',
+              background: activeTab === 'reports' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'rgba(255, 255, 255, 0.06)',
               color: activeTab === 'reports' ? '#ffffff' : 'var(--text-secondary)',
-              boxShadow: activeTab === 'reports' ? '0 2px 8px rgba(59,130,246,0.3)' : 'none',
-              transition: 'all 0.15s ease',
+              boxShadow: activeTab === 'reports' ? '0 0 20px rgba(59, 130, 246, 0.4)' : 'none',
+              transition: 'all 0.2s ease',
             }}
           >🚩 Complaint Reports ({reports.filter(r => r.status === 'open').length})</button>
         </div>
