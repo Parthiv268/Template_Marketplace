@@ -26,6 +26,7 @@
 
   /* Accent — pure white emphasis */
   --accent:         #ffffff;
+  --accent-inverse: #000000;
   --accent-dim:     rgba(255,255,255,0.08);
   --accent-glow:    rgba(255,255,255,0.15);
 
@@ -38,8 +39,8 @@
   --amber-dim:      rgba(245,158,11,0.12);
 
   /* NFT accent — kept purple for distinction */
-  --nft:            #a78bfa;
-  --nft-dim:        rgba(167,139,250,0.12);
+  --nft:            #7c3aed;
+  --nft-dim:        rgba(124,58,237,0.12);
 
   /* Typography */
   --font:           'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -55,11 +56,38 @@
   --shadow-white:   0 0 20px rgba(255,255,255,0.06);
 }
 
+[data-theme="light"] {
+  /* Core palette — dominantly white theme */
+  --bg-page:        #f8fafc;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #f1f5f9;
+  --bg-hover:       #e2e8f0;
+
+  --border-subtle:  rgba(0,0,0,0.06);
+  --border-default: rgba(0,0,0,0.12);
+  --border-strong:  rgba(0,0,0,0.25);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #64748b;
+
+  --accent:         #0f172a;
+  --accent-inverse: #ffffff;
+  --accent-dim:     rgba(15,23,42,0.06);
+  --accent-glow:    rgba(15,23,42,0.12);
+
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:      0 4px 16px rgba(0,0,0,0.1);
+  --shadow-lg:      0 8px 32px rgba(0,0,0,0.12);
+  --shadow-white:   0 0 20px rgba(15,23,42,0.08);
+}
+
 /* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 html {

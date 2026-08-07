@@ -47,6 +47,15 @@ class ResourceListView(generics.ListAPIView):
         if category:
             queryset = queryset.filter(category__id=category)
 
+        owner = self.request.query_params.get('owner')
+        if owner == 'me':
+            if self.request.user.is_authenticated:
+                queryset = queryset.filter(owner=self.request.user)
+            else:
+                queryset = queryset.none()
+        elif owner:
+            queryset = queryset.filter(owner__id=owner)
+
         return queryset
 
 
@@ -64,6 +73,11 @@ class ResourceUploadView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         resource = serializer.save(owner=self.request.user)
+
+        # Handle multiple uploaded additional images
+        additional_images = self.request.FILES.getlist('images')
+        for i, img in enumerate(additional_images):
+            ResourceImage.objects.create(resource=resource, image=img, order=i)
 
         profile = self.request.user.profile
         if profile.status != 'creator':
@@ -200,6 +214,12 @@ class NFTListForResaleView(APIView):
         except (ValueError, Exception):
             return Response({'error': 'Invalid resale price'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if token.resource.is_selling_paused:
+            return Response(
+                {'error': 'Trading for this token collection has been paused by the creator.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         token.is_listed_for_resale = True
         token.resale_price = resale_price
         token.save()
@@ -274,6 +294,11 @@ class NFTBuyResaleView(APIView):
 
         if token.owner == request.user:
             return Response({'error': 'You already own this token'}, status=status.HTTP_400_BAD_REQUEST)
+        if token.resource.is_selling_paused:
+            return Response(
+                {'error': 'Trading for this token collection has been paused by the creator.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         resource = token.resource
         resale_price = token.resale_price
@@ -377,6 +402,7 @@ class CreatorNFTDashboardView(APIView):
                 'primary_revenue': str(pri.get('total_earnings') or Decimal('0')),
                 'royalty_revenue': str(sec.get('total_royalty') or Decimal('0')),
                 'supply_percent': round(r.tokens_minted / r.max_supply * 100, 1) if r.max_supply else 0,
+                'is_selling_paused': r.is_selling_paused,
             })
 
         # Time-series: group sales by date (last 90 days)
@@ -526,16 +552,44 @@ class UserStatsView(generics.GenericAPIView):
 
     def get(self, request):
         user = request.user
-        # MERGE: query NFTToken instead of Acquisition
-        # items_owned = tokens currently held; total_spent = sum of paid_amount on those tokens
-        agg = NFTToken.objects.filter(owner=user).aggregate(
-            items_owned=Count('id'),
-            total_spent=Sum('paid_amount'),
+        items_owned = NFTToken.objects.filter(owner=user).count()
+        wishlist_count = Wishlist.objects.filter(user=user).count()
+
+        user_purchases = NFTSale.objects.filter(buyer=user).select_related(
+            'token', 'token__resource', 'seller'
+        ).order_by('-sold_at')
+
+        agg = user_purchases.aggregate(
+            total_spent=Sum('sale_price'),
+            primary_spent=Sum('sale_price', filter=Q(sale_type='primary')),
+            secondary_spent=Sum('sale_price', filter=Q(sale_type='secondary')),
         )
+
+        total_spent = agg['total_spent'] or Decimal('0')
+        primary_spent = agg['primary_spent'] or Decimal('0')
+        secondary_spent = agg['secondary_spent'] or Decimal('0')
+
+        purchases_data = []
+        for sale in user_purchases:
+            purchases_data.append({
+                'id': sale.id,
+                'token_number': sale.token.token_number,
+                'resource_id': sale.token.resource.id,
+                'resource_title': sale.token.resource.title,
+                'resource_thumbnail': request.build_absolute_uri(sale.token.resource.thumbnail.url) if sale.token.resource.thumbnail else None,
+                'seller': sale.seller.username,
+                'sale_type': sale.sale_type,
+                'sale_price': str(sale.sale_price),
+                'sold_at': sale.sold_at.strftime('%b %d, %Y') if sale.sold_at else '',
+            })
+
         data = {
-            'items_owned': agg['items_owned'] or 0,
-            'total_spent': agg['total_spent'] or 0,
-            'wishlist_count': Wishlist.objects.filter(user=user).count(),
+            'items_owned': items_owned,
+            'total_spent': str(total_spent),
+            'primary_spent': str(primary_spent),
+            'secondary_spent': str(secondary_spent),
+            'wishlist_count': wishlist_count,
+            'purchases': purchases_data,
         }
         return Response(data)
 
@@ -559,4 +613,25 @@ class AdminStatsView(generics.GenericAPIView):
             'open_reports': Report.objects.filter(status='open').count(),
             'pending_payouts': Payout.objects.filter(status='requested').count(),
         }
-        return Response(data)
+
+class ToggleResourceSaleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            resource = Resource.objects.get(id=pk, owner=request.user)
+        except Resource.DoesNotExist:
+            return Response(
+                {'error': 'Resource not found or unauthorized'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        resource.is_selling_paused = not resource.is_selling_paused
+        resource.save()
+
+        return Response({
+            'success': True,
+            'is_selling_paused': resource.is_selling_paused,
+            'message': f"Sales {'paused' if resource.is_selling_paused else 'resumed'} for '{resource.title}'."
+        })
+

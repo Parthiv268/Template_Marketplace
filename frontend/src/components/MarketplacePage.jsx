@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getMediaUrl } from '../api.js';
 
 /* Performance: debounce hook — delays calling fn until user stops typing */
 function useDebounce(value, delay) {
@@ -174,19 +175,26 @@ function ResourceCard({ resource, onClick }) {
         >
             {/* CHANGES TO FRONTEND — MarketplacePage: thumbnail with zoom and badge overlay */}
             <div style={{ position: 'relative', height: '160px', overflow: 'hidden', background: '#1a1a1a' }}>
-                <img
-                    src={`http://127.0.0.1:8000${resource.thumbnail}`}
-                    alt={resource.title}
-                    style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        transition: 'transform 0.35s ease',
-                        transform: hovered ? 'scale(1.06)' : 'scale(1)',
-                    }}
-                    onError={e => e.target.style.display = 'none'}
-                />
+                {resource.thumbnail && (
+                    <img
+                        src={getMediaUrl(resource.thumbnail)}
+                        alt={resource.title}
+                        style={{
+                            width: '100%', height: '100%', objectFit: 'cover',
+                            transition: 'transform 0.35s ease',
+                            transform: hovered ? 'scale(1.06)' : 'scale(1)',
+                        }}
+                    />
+                )}
                 {/* Supply badge overlay */}
                 <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                    {soldOut ? (
+                    {resource.is_selling_paused ? (
+                        <span style={{
+                            display: 'inline-block', padding: '2px 10px',
+                            background: 'rgba(239, 68, 68, 0.9)', color: '#fff',
+                            borderRadius: '99px', fontSize: '11px', fontWeight: 700,
+                        }}>🛑 Paused</span>
+                    ) : soldOut ? (
                         <span style={{
                             display: 'inline-block', padding: '2px 10px',
                             background: 'rgba(245,158,11,0.9)', color: '#000',

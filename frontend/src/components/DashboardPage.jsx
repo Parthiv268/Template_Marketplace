@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile } from '../api.js';
+import { getProfile, getMediaUrl } from '../api.js';
 
 function DashboardPage() {
     const [profile, setProfile] = useState(null);
@@ -97,7 +97,10 @@ function DashboardPage() {
         );
     }
 
-    const totalRevenuePotential = resources.reduce((sum, r) => sum + parseFloat(r.price), 0);
+    const totalRevenuePotential = resources.reduce(
+        (sum, r) => sum + (parseFloat(r.price) * (parseInt(r.max_supply) || 50)),
+        0
+    );
 
     /* CHANGES TO FRONTEND — DashboardPage: stat card component */
     const StatCard = ({ label, value, color, onClick, hint }) => {
@@ -153,7 +156,12 @@ function DashboardPage() {
                 }}>
                     <StatCard label="Total Resources" value={resources.length} color="#ffffff" />
                     <StatCard label="Status" value={profile?.status} color="var(--green)" />
-                    <StatCard label="Potential Revenue" value={`₹${totalRevenuePotential.toFixed(0)}`} color="#f59e0b" />
+                    <StatCard
+                        label="Potential Revenue"
+                        value={`₹${totalRevenuePotential.toLocaleString('en-IN')}`}
+                        color="#f59e0b"
+                        hint="Primary sales: price × max supply"
+                    />
                     {/* CHANGES TO FRONTEND — DashboardPage: NFT card now links to NFT dashboard */}
                     <StatCard
                         label="⬡ NFT Dashboard"
@@ -218,12 +226,13 @@ function ResourceRow({ resource, onView }) {
                 transition: 'all 0.2s ease',
             }}
         >
-            <img
-                src={resource.thumbnail}
-                alt={resource.title}
-                style={{ width: '72px', height: '54px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
-                onError={e => e.target.style.display = 'none'}
-            />
+            {resource.thumbnail && (
+                <img
+                    src={getMediaUrl(resource.thumbnail)}
+                    alt={resource.title}
+                    style={{ width: '72px', height: '54px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                />
+            )}
             <div style={{ flex: 1, minWidth: 0 }}>
                 <h4 style={{ color: 'var(--text-primary)', margin: '0 0 3px', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {resource.title}

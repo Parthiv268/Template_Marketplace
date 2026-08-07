@@ -1,16 +1,11 @@
-/* ============================================================
-   CHANGES TO FRONTEND — UserDashboard
-   - Dark page and card surfaces
-   - Stat cards match the design system (dark surface, white text)
-   - Labels in muted uppercase, values in bold white
-   ============================================================ */
-
 import { useState, useEffect } from 'react';
-import { getUserStats } from '../api.js';
+import { useNavigate } from 'react-router-dom';
+import { getUserStats, getMediaUrl } from '../api.js';
 
 function UserDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getUserStats()
@@ -19,63 +14,154 @@ function UserDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  /* CHANGES TO FRONTEND — UserDashboard: dark loading state */
   if (loading) return (
     <div className="page-loading">
       <div className="spinner" />
-      <span>Loading…</span>
+      <span>Loading spending analytics…</span>
     </div>
   );
 
+  const purchases = stats?.purchases || [];
+
   return (
-    /* CHANGES TO FRONTEND — UserDashboard: dark page wrapper */
     <div style={{
       minHeight: '100vh',
       background: 'var(--bg-page)',
-      padding: '40px 32px',
+      padding: '40px 32px 60px',
       fontFamily: 'var(--font)',
     }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
 
-        {/* CHANGES TO FRONTEND — UserDashboard: page header */}
-        <h1 style={{
-          fontSize: '28px', fontWeight: 800,
-          color: 'var(--text-primary)', margin: '0 0 6px',
-          letterSpacing: '-0.02em',
-        }}>My Dashboard</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>
-          For your collection and wishlist, see Library and Wishlist in the nav.
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+          <div>
+            <h1 style={{
+              fontSize: '28px', fontWeight: 800,
+              color: 'var(--text-primary)', margin: '0 0 6px',
+              letterSpacing: '-0.02em',
+            }}>User Dashboard & Money Spent</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
+              Track your total expenditure, primary mints, secondary market resales, and acquisition history.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/library')}
+            style={{
+              padding: '9px 18px', background: 'var(--bg-surface)',
+              color: 'var(--text-primary)', border: '1px solid var(--border-default)',
+              borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+            }}
+          >View My Library →</button>
+        </div>
 
-        {/* CHANGES TO FRONTEND — UserDashboard: stat cards on dark */}
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <StatCard label="Items Owned"   value={stats?.items_owned ?? 0}   />
-          <StatCard label="Total Spent"   value={`₹${stats?.total_spent ?? 0}`} color="#f59e0b" />
-          <StatCard label="Wishlist"      value={stats?.wishlist_count ?? 0} />
+        {/* Spending Stat Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '16px', marginBottom: '36px',
+        }}>
+          <StatCard label="Total Spent" value={`₹${parseFloat(stats?.total_spent || 0).toLocaleString('en-IN')}`} color="#f59e0b" sub="Across all acquisitions" />
+          <StatCard label="Primary Spend" value={`₹${parseFloat(stats?.primary_spent || 0).toLocaleString('en-IN')}`} color="#10b981" sub="Direct creator mints" />
+          <StatCard label="Resale Spend" value={`₹${parseFloat(stats?.secondary_spent || 0).toLocaleString('en-IN')}`} color="#7c3aed" sub="Secondary market resales" />
+          <StatCard label="Tokens Owned" value={stats?.items_owned ?? 0} color="#06b6d4" sub="Active library tokens" />
+          <StatCard label="Wishlist Items" value={stats?.wishlist_count ?? 0} color="#ffffff" sub="Saved resources" />
+        </div>
+
+        {/* Spending & Purchase History Log */}
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '16px', padding: '24px',
+        }}>
+          <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '18px', margin: '0 0 16px' }}>
+            Acquisition & Spending History
+          </h3>
+
+          {purchases.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: '0 0 12px' }}>No purchases logged yet.</p>
+              <button
+                onClick={() => navigate('/marketplace')}
+                style={{
+                  padding: '9px 20px', background: '#ffffff', color: '#000000',
+                  border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px',
+                }}
+              >Browse Marketplace</button>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', textAlign: 'left' }}>
+                    {['Resource', 'Token', 'Type', 'Seller', 'Price Paid', 'Date'].map(h => (
+                      <th key={h} style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.map(p => (
+                    <tr
+                      key={p.id}
+                      onClick={() => navigate(`/resources/${p.resource_id}`)}
+                      style={{
+                        borderBottom: '1px solid var(--border-subtle)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {p.resource_thumbnail && (
+                            <img src={getMediaUrl(p.resource_thumbnail)} alt="" style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }} />
+                          )}
+                          <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.resource_title}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px', color: '#a78bfa', fontWeight: 600 }}>
+                        Token #{p.token_number}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{
+                          padding: '3px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
+                          background: p.sale_type === 'primary' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(124, 58, 237, 0.15)',
+                          color: p.sale_type === 'primary' ? '#10b981' : '#a78bfa',
+                        }}>
+                          {p.sale_type === 'primary' ? 'Primary Mint' : 'Resale Purchase'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{p.seller}</td>
+                      <td style={{ padding: '12px', color: '#f59e0b', fontWeight: 700 }}>₹{parseFloat(p.sale_price).toFixed(0)}</td>
+                      <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{p.sold_at}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-/* CHANGES TO FRONTEND — UserDashboard: reusable dark stat card */
-function StatCard({ label, value, color }) {
+function StatCard({ label, value, color, sub }) {
   return (
     <div style={{
-      flex: 1, minWidth: '160px',
       background: 'var(--bg-surface)',
       border: '1px solid var(--border-subtle)',
-      borderRadius: '14px', padding: '22px 20px',
+      borderRadius: '14px', padding: '20px',
     }}>
       <p style={{
-        color: 'var(--text-muted)', fontSize: '12px',
+        color: 'var(--text-muted)', fontSize: '11px',
         fontWeight: 600, textTransform: 'uppercase',
-        letterSpacing: '0.5px', margin: '0 0 8px',
+        letterSpacing: '0.5px', margin: '0 0 6px',
       }}>{label}</p>
       <p style={{
         color: color || 'var(--text-primary)',
-        fontSize: '28px', fontWeight: 700, margin: 0,
+        fontSize: '24px', fontWeight: 700, margin: '0 0 4px',
       }}>{value}</p>
+      {sub && <p style={{ color: 'var(--text-muted)', fontSize: '11px', margin: 0 }}>{sub}</p>}
     </div>
   );
 }

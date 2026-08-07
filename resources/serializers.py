@@ -31,7 +31,7 @@ class ResourceSerializer(serializers.ModelSerializer):
             'status', 'max_supply', 'royalty_percent',
             'token_id', 'ipfs_hash', 'created_at',
             'tokens_minted', 'tokens_remaining',
-            'images',   # ← new
+            'images','is_selling_paused',   # ← new
         ]
         read_only_fields = [
             'owner', 'status',

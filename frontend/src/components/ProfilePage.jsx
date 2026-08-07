@@ -10,10 +10,13 @@
    ============================================================ */
 
 import { useState, useEffect } from "react";
-import { getProfile, decodeToken, updateProfile } from "../api.js";
+import { useNavigate } from "react-router-dom";
+import { getProfile, decodeToken, updateProfile, getUserStats } from "../api.js";
 
 function ProfilePage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [bio, setBio] = useState("");
@@ -25,8 +28,12 @@ function ProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const data = await getProfile();
+        const [data, statsData] = await Promise.all([
+          getProfile(),
+          getUserStats().catch(() => null),
+        ]);
         setProfile(data);
+        setStats(statsData);
         setBio(data.bio || "");
       } catch (error) {
         console.log("Error loading profile:", error);
@@ -145,6 +152,17 @@ function ProfilePage() {
               <InfoRow label="Username" value={profile.username} />
               <InfoRow label="Email"    value={profile.email} />
               <InfoRow label="Status"   value={profile.status} />
+              <InfoRow
+                label="Total Money Spent"
+                value={
+                  <span
+                    onClick={() => navigate('/dashboard/user')}
+                    style={{ color: '#f59e0b', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ₹{parseFloat(stats?.total_spent || 0).toLocaleString('en-IN')} →
+                  </span>
+                }
+              />
               <div style={{ padding: '12px 0' }}>
                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '6px' }}>Bio</p>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6 }}>

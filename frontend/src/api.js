@@ -258,11 +258,33 @@ async function getMyNFTTokens() {
   if (!res.ok) throw data;
   return data;
 }
+async function toggleResourceSale(resourceId) {
+  const token = localStorage.getItem("access");
+  const res = await fetch(`${BASE_URL}/resources/${resourceId}/toggle-sale/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+function getMediaUrl(url) {
+  if (!url) return '';
+  if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+    return url;
+  }
+  return `http://127.0.0.1:8000${url.startsWith('/') ? '' : '/'}${url}`;
+}
 
 export {
   registerUser, loginUser, getProfile, updateProfile, decodeToken,
   getUserStats, getAdminStats,
   getMyPayouts, requestPayout, adminGetAllPayouts, adminUpdatePayout,
   fileReport, adminGetAllReports, adminUpdateReport,
-  getResaleListings, listTokenForResale, cancelResaleListing, buyResaleToken, getMyNFTTokens,
+  getResaleListings, listTokenForResale, cancelResaleListing, buyResaleToken, getMyNFTTokens, toggleResourceSale,
+  getMediaUrl,
 };

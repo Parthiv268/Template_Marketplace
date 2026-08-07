@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { getMediaUrl } from '../api.js';
 
 function ImageCarousel({ images }) {
   const [current, setCurrent] = useState(0);
@@ -8,25 +9,29 @@ function ImageCarousel({ images }) {
   const goNext = () => setCurrent(prev => (prev + 1) % images.length);
   const goPrev = () => setCurrent(prev => (prev - 1 + images.length) % images.length);
 
-  // Auto-slide every 1 second, unless paused (e.g. user hovering)
+  // Auto-slide every 3 seconds, unless paused (e.g. user hovering)
   useEffect(() => {
-    if (images.length <= 1 || isPaused) return;
-    intervalRef.current = setInterval(goNext, 1000);
+    if (!images || images.length <= 1 || isPaused) return;
+    intervalRef.current = setInterval(goNext, 3000);
     return () => clearInterval(intervalRef.current);
-  }, [images.length, isPaused, current]);
+  }, [images?.length, isPaused, current]);
 
   if (!images || images.length === 0) return null;
 
+  const currentImgUrl = typeof images[current] === 'string'
+    ? images[current]
+    : (images[current]?.image || images[current]?.thumbnail || '');
+
   return (
     <div
-      style={{ position: 'relative', width: '100%', maxHeight: '380px', borderRadius: '14px', overflow: 'hidden', marginBottom: '28px' }}
+      style={{ position: 'relative', width: '100%', maxHeight: '400px', borderRadius: '16px', overflow: 'hidden', marginBottom: '28px', border: '1px solid var(--border-subtle)' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       <img
-        src={images[current].image}
+        src={getMediaUrl(currentImgUrl)}
         alt={`Slide ${current + 1}`}
-        style={{ width: '100%', height: '380px', objectFit: 'cover', display: 'block', transition: 'opacity 0.3s' }}
+        style={{ width: '100%', height: '400px', objectFit: 'cover', display: 'block', transition: 'opacity 0.3s' }}
       />
 
       {images.length > 1 && (

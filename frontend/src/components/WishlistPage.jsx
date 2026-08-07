@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getMediaUrl } from '../api.js';
 
 function WishlistPage() {
     const [wishlist, setWishlist] = useState([]);
@@ -135,16 +136,17 @@ function WishlistCard({ item, onView, onRemove }) {
             }}
         >
             <div style={{ height: '150px', overflow: 'hidden' }}>
-                <img
-                    src={item.thumbnail}
-                    alt={item.resource_title}
-                    style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        transition: 'transform 0.3s ease',
-                        transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                    }}
-                    onError={e => e.target.style.display = 'none'}
-                />
+                {item.thumbnail && (
+                    <img
+                        src={getMediaUrl(item.thumbnail)}
+                        alt={item.resource_title}
+                        style={{
+                            width: '100%', height: '100%', objectFit: 'cover',
+                            transition: 'transform 0.3s ease',
+                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                        }}
+                    />
+                )}
             </div>
             <div style={{ padding: '16px' }}>
                 <h3 style={{ color: 'var(--text-primary)', margin: '0 0 4px', fontSize: '15px', fontWeight: 600 }}>

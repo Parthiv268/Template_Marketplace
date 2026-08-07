@@ -77,6 +77,11 @@ class CreateOrderView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if resource.is_selling_paused:
+            return Response(
+                {'error': 'Token selling has been temporarily paused by the creator.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         amount_paise = int(float(resource.price) * 100)
 

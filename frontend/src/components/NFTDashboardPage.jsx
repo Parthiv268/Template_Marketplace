@@ -4,6 +4,8 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadialBarChart, RadialBar, PieChart, Pie, Cell,
 } from 'recharts';
+ import { toggleResourceSale } from '../api.js';
+
 
 const API = 'http://127.0.0.1:8000';
 
@@ -62,7 +64,7 @@ function StatCard({ label, value, sub, color, icon }) {
   );
 }
 
-function SupplyBar({ minted, max, title, royalty, primaryRevenue, royaltyRevenue, price }) {
+function SupplyBar({ resourceId, minted, max, title, royalty, primaryRevenue, royaltyRevenue, price, isSellingPaused, onToggleSale, isToggling }) {
   const pct = max > 0 ? Math.min((minted / max) * 100, 100) : 0;
   const isSoldOut = minted >= max;
   return (
@@ -79,7 +81,35 @@ function SupplyBar({ minted, max, title, royalty, primaryRevenue, royaltyRevenue
             {minted} / {max} minted · {royalty}% royalty · ₹{parseFloat(price).toFixed(0)} floor
           </p>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {onToggleSale && (
+            <button
+              disabled={isToggling}
+              onClick={(e) => onToggleSale(e, resourceId)}
+              style={{
+                padding: '4px 12px',
+                borderRadius: '20px',
+                border: 'none',
+                cursor: isToggling ? 'not-allowed' : 'pointer',
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.2s ease',
+                background: isSellingPaused ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                color: isSellingPaused ? '#ef4444' : '#10b981',
+              }}
+            >
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: isSellingPaused ? '#ef4444' : '#10b981'
+              }} />
+              {isToggling ? 'Updating…' : isSellingPaused ? 'Paused' : 'Active'}
+            </button>
+          )}
           {isSoldOut ? (
             <span style={{ background: '#fbbf24', color: '#000', fontSize: '11px', fontWeight: 700, padding: '2px 10px', borderRadius: '20px' }}>SOLD OUT</span>
           ) : (
@@ -181,6 +211,7 @@ function NFTDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [togglingId, setTogglingId] = useState(null);
   const navigate = useNavigate();
 
   const load = useCallback(async () => {
@@ -202,6 +233,26 @@ function NFTDashboardPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleToggleSale = async (e, resourceId) => {
+    e.stopPropagation();
+    setTogglingId(resourceId);
+    try {
+      const res = await toggleResourceSale(resourceId);
+      setData(prev => ({
+        ...prev,
+        resources_breakdown: prev.resources_breakdown.map(r =>
+          r.resource_id === resourceId
+            ? { ...r, is_selling_paused: res.is_selling_paused }
+            : r
+        )
+      }));
+    } catch (err) {
+      alert(err.error || err.detail || 'Failed to toggle sale status');
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   if (loading) return (
     <div style={styles.loadingWrap}>
@@ -230,6 +281,11 @@ function NFTDashboardPage() {
   ];
 
   const tabs = ['overview', 'analytics', 'collections', 'sales feed'];
+
+  const total_potential_primary = resources_breakdown?.reduce(
+    (sum, r) => sum + (parseFloat(r.price || 0) * (parseInt(r.max_supply) || 0)),
+    0
+  ) || 0;
 
   return (
     <div style={styles.page}>
@@ -269,7 +325,7 @@ function NFTDashboardPage() {
             <StatCard label="Tokens Minted" value={total_tokens_minted} icon="🪙"
               sub="across all collections" color="#06b6d4" />
             <StatCard label="Primary Earnings" value={fmt(total_primary_earnings)} icon="💎"
-              sub="from first-time mints" color="#10b981" />
+              sub={`Potential: ₹${fmt(total_potential_primary)}`} color="#10b981" />
             <StatCard label="Royalties Earned" value={fmt(total_royalty_earned)} icon="♾️"
               sub="from secondary resales" color="#7c3aed" />
             <StatCard label="Total Earnings" value={fmt(total_combined_earnings)} icon="🚀"
@@ -284,9 +340,13 @@ function NFTDashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {resources_breakdown.map(r => (
                   <SupplyBar key={r.resource_id}
+                    resourceId={r.resource_id}
                     title={r.title} minted={r.tokens_minted} max={r.max_supply}
                     royalty={r.royalty_percent} primaryRevenue={r.primary_revenue}
                     royaltyRevenue={r.royalty_revenue} price={r.price}
+                    isSellingPaused={r.is_selling_paused}
+                    onToggleSale={handleToggleSale}
+                    isToggling={togglingId === r.resource_id}
                   />
                 ))}
               </div>
@@ -440,7 +500,7 @@ function NFTDashboardPage() {
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      {['Collection', 'Floor Price', 'Max Supply', 'Minted', 'Remaining', 'Royalty %', 'Primary Rev', 'Royalty Rev'].map(h => (
+                      {['Collection', 'Floor Price', 'Max Supply', 'Minted', 'Remaining', 'Royalty %', 'Primary Rev', 'Royalty Rev', 'Sales Status'].map(h => (
                         <th key={h} style={styles.th}>{h}</th>
                       ))}
                     </tr>
@@ -474,11 +534,41 @@ function NFTDashboardPage() {
                         <td style={styles.td}>
                           <span style={{ color: '#7c3aed', fontWeight: 600 }}>{r.royalty_percent}%</span>
                         </td>
-                        <td style={styles.td} style={{ color: '#10b981', fontWeight: 600 }}>
+                        <td style={{ ...styles.td, color: '#10b981', fontWeight: 600 }}>
                           ₹{parseFloat(r.primary_revenue).toFixed(0)}
                         </td>
                         <td style={{ ...styles.td, color: '#a78bfa', fontWeight: 600 }}>
                           ₹{parseFloat(r.royalty_revenue).toFixed(0)}
+                        </td>
+                        <td style={styles.td} onClick={e => e.stopPropagation()}>
+                          <button
+                            disabled={togglingId === r.resource_id}
+                            onClick={e => handleToggleSale(e, r.resource_id)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              border: 'none',
+                              cursor: togglingId === r.resource_id ? 'not-allowed' : 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s ease',
+                              background: r.is_selling_paused
+                                ? 'rgba(239, 68, 68, 0.15)'
+                                : 'rgba(16, 185, 129, 0.15)',
+                              color: r.is_selling_paused ? '#ef4444' : '#10b981',
+                            }}
+                          >
+                            <span style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              background: r.is_selling_paused ? '#ef4444' : '#10b981'
+                            }} />
+                            {togglingId === r.resource_id ? 'Updating…' : r.is_selling_paused ? 'Paused' : 'Active'}
+                          </button>
                         </td>
                       </tr>
                     ))}

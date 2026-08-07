@@ -12,6 +12,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getMediaUrl } from '../api.js';
+import ImageCarousel from './ImageCarousel';
 
 function ResourceDetailPage() {
     const { id } = useParams();
@@ -137,6 +139,19 @@ function ResourceDetailPage() {
         } catch (err) { console.log('Payment error:', err); alert('Something went wrong.'); }
     }
 
+    const carouselImages = [];
+    if (resource?.thumbnail) {
+        carouselImages.push({ image: resource.thumbnail });
+    }
+    if (resource?.images && Array.isArray(resource.images)) {
+        resource.images.forEach(imgObj => {
+            const url = typeof imgObj === 'string' ? imgObj : imgObj.image;
+            if (url) {
+                carouselImages.push({ image: url });
+            }
+        });
+    }
+
     return (
         /* CHANGES TO FRONTEND — ResourceDetailPage: dark page wrapper */
         <div style={{
@@ -162,17 +177,9 @@ function ResourceDetailPage() {
                     }}
                 >← Back to Marketplace</button>
 
-                {/* Thumbnail */}
-                {resource.thumbnail && (
-                    <img
-                        src={resource.thumbnail}
-                        alt={resource.title}
-                        style={{
-                            width: '100%', maxHeight: '400px', objectFit: 'cover',
-                            borderRadius: '16px', marginBottom: '28px',
-                            border: '1px solid var(--border-subtle)',
-                        }}
-                    />
+                {/* Image Carousel (auto-slides every 3 seconds) */}
+                {carouselImages.length > 0 && (
+                    <ImageCarousel images={carouselImages} />
                 )}
 
                 {/* ── Minted Token Success Card ──────────────────────── */}
@@ -284,7 +291,14 @@ function ResourceDetailPage() {
                                 }}>
                                     {resource.royalty_percent}% Royalty
                                 </span>
-                                {isSoldOut ? (
+                                {resource.is_selling_paused ? (
+                                    <span style={{
+                                        display: 'inline-block', padding: '2px 10px',
+                                        background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444',
+                                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                                        borderRadius: '99px', fontSize: '11px', fontWeight: 700,
+                                    }}>🛑 Selling Paused</span>
+                                ) : isSoldOut ? (
                                     <span style={{
                                         display: 'inline-block', padding: '2px 10px',
                                         background: 'var(--amber-dim)', color: 'var(--amber)',
@@ -320,12 +334,15 @@ function ResourceDetailPage() {
                             </div>
                         </div>
 
-                        {!isSoldOut && (
+                        {resource.is_selling_paused ? (
+                            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: 600, margin: 0 }}>
+                                🛑 Selling has been temporarily paused by the creator.
+                            </p>
+                        ) : !isSoldOut ? (
                             <p style={{ color: 'var(--nft)', fontSize: '13px', fontWeight: 500, margin: 0 }}>
                                 🎟 You'll receive <b>Token #{nextTokenNumber} of {nftStatus.max_supply}</b>
                             </p>
-                        )}
-                        {isSoldOut && (
+                        ) : (
                             <p style={{ color: 'var(--amber)', fontSize: '13px', fontWeight: 500, margin: 0 }}>
                                 All primary tokens are minted. Check the secondary market for resale listings.
                             </p>
@@ -341,23 +358,23 @@ function ResourceDetailPage() {
 
                 {/* ── Action Buttons ────────────────────────────────── */}
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {/* CHANGES TO FRONTEND — ResourceDetailPage: Acquire = white primary / disabled on sold-out */}
+                    {/* CHANGES TO FRONTEND — ResourceDetailPage: Acquire = white primary / disabled on sold-out or paused */}
                     <button
                         id="detail-acquire-btn"
                         onClick={handleAcquire}
-                        disabled={isSoldOut}
-                        onMouseEnter={e => { if (!isSoldOut) { e.currentTarget.style.background = '#e4e4e7'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(255,255,255,0.12)'; } }}
-                        onMouseLeave={e => { e.currentTarget.style.background = isSoldOut ? 'var(--bg-elevated)' : '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                        disabled={isSoldOut || resource.is_selling_paused}
+                        onMouseEnter={e => { if (!isSoldOut && !resource.is_selling_paused) { e.currentTarget.style.background = '#e4e4e7'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(255,255,255,0.12)'; } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = (isSoldOut || resource.is_selling_paused) ? 'var(--bg-elevated)' : '#ffffff'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                         style={{
                             flex: 2, padding: '14px',
-                            background: isSoldOut ? 'var(--bg-elevated)' : '#ffffff',
-                            color: isSoldOut ? 'var(--text-muted)' : '#000000',
+                            background: (isSoldOut || resource.is_selling_paused) ? 'var(--bg-elevated)' : '#ffffff',
+                            color: (isSoldOut || resource.is_selling_paused) ? 'var(--text-muted)' : '#000000',
                             border: 'none', borderRadius: '10px',
-                            fontSize: '15px', fontWeight: 700, cursor: isSoldOut ? 'not-allowed' : 'pointer',
+                            fontSize: '15px', fontWeight: 700, cursor: (isSoldOut || resource.is_selling_paused) ? 'not-allowed' : 'pointer',
                             fontFamily: 'var(--font)', transition: 'all 0.2s ease',
                         }}
                     >
-                        {isSoldOut ? '🔥 Primary Sold Out' : `Mint Token #${nextTokenNumber} · ₹${resource.price}`}
+                        {resource.is_selling_paused ? '🛑 Selling Paused by Creator' : isSoldOut ? '🔥 Primary Sold Out' : `Mint Token #${nextTokenNumber} · ₹${resource.price}`}
                     </button>
 
                     {/* CHANGES TO FRONTEND — ResourceDetailPage: Wishlist = ghost style */}

@@ -6,7 +6,7 @@ from .views import (
     NFTBuyResaleView, MyNFTTokensView, CreatorNFTDashboardView,
     PayoutCreateListView, AdminPayoutListView, AdminPayoutActionView,
     ReportCreateView, AdminReportListView, AdminReportActionView,
-    UserStatsView, AdminStatsView,
+    UserStatsView, AdminStatsView,ToggleResourceSaleView
 )
 
 urlpatterns = [
@@ -45,4 +45,5 @@ urlpatterns = [
 
     path('stats/user/', UserStatsView.as_view(), name='user-stats'),
     path('stats/admin/', AdminStatsView.as_view(), name='admin-stats'),
+    path('<int:pk>/toggle-sale/', ToggleResourceSaleView.as_view(), name='toggle-resource-sale'),
 ]

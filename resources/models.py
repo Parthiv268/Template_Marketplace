@@ -44,7 +44,7 @@ class Resource(models.Model):
     token_id = models.IntegerField(null=True, blank=True)
     ipfs_hash = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    is_selling_paused = models.BooleanField(default=False)
     def __str__(self):
         return self.title
 

@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getResaleListings, buyResaleToken } from '../api.js';
+import { getResaleListings, buyResaleToken, getMediaUrl } from '../api.js';
 
 function ResaleMarketplacePage() {
     const [listings, setListings] = useState([]);
@@ -312,16 +312,17 @@ function ResaleCard({ token, onBuy, onViewResource }) {
         >
             {/* Thumbnail with badges */}
             <div style={{ position: 'relative', height: '150px', overflow: 'hidden', background: '#1a1a1a' }}>
-                <img
-                    src={`http://127.0.0.1:8000${token.resource_thumbnail}`}
-                    alt={token.resource_title}
-                    style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        transition: 'transform 0.35s ease',
-                        transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                    }}
-                    onError={e => e.target.style.display = 'none'}
-                />
+                {token.resource_thumbnail && (
+                    <img
+                        src={getMediaUrl(token.resource_thumbnail)}
+                        alt={token.resource_title}
+                        style={{
+                            width: '100%', height: '100%', objectFit: 'cover',
+                            transition: 'transform 0.35s ease',
+                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                        }}
+                    />
+                )}
                 {/* Token number badge */}
                 <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                     <span style={{

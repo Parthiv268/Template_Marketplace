@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyNFTTokens, listTokenForResale, cancelResaleListing } from '../api.js';
+import { getMyNFTTokens, listTokenForResale, cancelResaleListing, getMediaUrl } from '../api.js';
 
 function LibraryPage() {
     const [tokens, setTokens] = useState([]);
@@ -304,16 +304,17 @@ function TokenCard({ token, onList, onCancel, onViewResource }) {
         >
             {/* Thumbnail */}
             <div style={{ position: 'relative', height: '150px', overflow: 'hidden', background: '#1a1a1a' }}>
-                <img
-                    src={`http://127.0.0.1:8000${token.resource_thumbnail}`}
-                    alt={token.resource_title}
-                    style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        transition: 'transform 0.3s ease',
-                        transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                    }}
-                    onError={e => e.target.style.display = 'none'}
-                />
+                {token.resource_thumbnail && (
+                    <img
+                        src={getMediaUrl(token.resource_thumbnail)}
+                        alt={token.resource_title}
+                        style={{
+                            width: '100%', height: '100%', objectFit: 'cover',
+                            transition: 'transform 0.3s ease',
+                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                        }}
+                    />
+                )}
                 {/* Token number badge */}
                 <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                     <span style={{
