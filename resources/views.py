@@ -99,6 +99,13 @@ class ReviewListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         resource_id = self.kwargs['resource_id']
         resource = Resource.objects.get(id=resource_id)
+        
+        # Check if the user owns a token for this resource
+        owns_token = NFTToken.objects.filter(resource=resource, owner=self.request.user).exists()
+        if not owns_token:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({"error": "You must own this resource to leave a review."})
+            
         serializer.save(user=self.request.user, resource=resource)
 
 

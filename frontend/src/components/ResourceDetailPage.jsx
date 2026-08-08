@@ -28,18 +28,26 @@ function ResourceDetailPage() {
     const [targetType, setTargetType] = useState('resource');
     const [reportReason, setReportReason] = useState('');
     const [submittingReport, setSubmittingReport] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [newReviewRating, setNewReviewRating] = useState(5);
+    const [newReviewComment, setNewReviewComment] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     useEffect(() => {
         const loadAll = async () => {
             try {
-                const [resourceRes, nftRes] = await Promise.all([
+                const [resourceRes, nftRes, reviewsRes] = await Promise.all([
                     fetch(`http://127.0.0.1:8000/api/resources/${id}/`),
                     fetch(`http://127.0.0.1:8000/api/resources/nft/status/${id}/`),
+                    fetch(`http://127.0.0.1:8000/api/resources/${id}/reviews/`, {
+                        headers: localStorage.getItem('access') ? { Authorization: `Bearer ${localStorage.getItem('access')}` } : {}
+                    }),
                 ]);
                 if (!resourceRes.ok) throw new Error('Resource not found');
                 const rData = await resourceRes.json();
                 setResource(rData);
                 if (nftRes.ok) setNftStatus(await nftRes.json());
+                if (reviewsRes.ok) setReviews(await reviewsRes.json());
                 
                 try {
                     const prof = await getProfile();
@@ -90,6 +98,33 @@ function ResourceDetailPage() {
             alert(err?.error || err?.detail || 'Failed to submit complaint. Make sure you are logged in.');
         } finally {
             setSubmittingReport(false);
+        }
+    };
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('access');
+        if (!token) { alert('Please log in to submit a review.'); return; }
+        setSubmittingReview(true);
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/api/resources/${id}/reviews/`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: newReviewRating, comment: newReviewComment }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Review submitted successfully!');
+                setReviews([data, ...reviews]);
+                setNewReviewRating(5);
+                setNewReviewComment('');
+            } else {
+                alert(data.non_field_errors?.[0] || data.error || 'Failed to submit review (You might have already reviewed this resource).');
+            }
+        } catch (err) {
+            alert('Something went wrong submitting your review.');
+        } finally {
+            setSubmittingReview(false);
         }
     };
 
@@ -470,6 +505,82 @@ function ResourceDetailPage() {
                                 boxShadow: '0 2px 10px rgba(239,68,68,0.3)',
                             }}
                         >🗑️ Delete Resource (Admin)</button>
+                    )}
+                </div>
+
+                {/* ── Reviews & Ratings Section ─────────────────────────── */}
+                <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
+                    <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, margin: '0 0 20px', fontSize: '18px' }}>Reviews & Ratings</h3>
+                    
+                    {/* Review Submission Form */}
+                    <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: '12px', marginBottom: '24px', border: '1px solid var(--border-default)' }}>
+                        <h4 style={{ color: 'var(--text-secondary)', margin: '0 0 12px', fontSize: '15px' }}>Leave a Review</h4>
+                        <form onSubmit={handleReviewSubmit}>
+                            <div style={{ marginBottom: '12px' }}>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '6px' }}>Rating (1-5)</label>
+                                <select 
+                                    value={newReviewRating} 
+                                    onChange={(e) => setNewReviewRating(Number(e.target.value))}
+                                    style={{
+                                        padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-elevated)',
+                                        border: '1px solid var(--border-default)', color: 'var(--text-primary)',
+                                        outline: 'none', cursor: 'pointer', fontFamily: 'var(--font)'
+                                    }}
+                                >
+                                    {[5,4,3,2,1].map(num => (
+                                        <option key={num} value={num}>{num} Stars</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '6px' }}>Comment</label>
+                                <textarea 
+                                    value={newReviewComment}
+                                    onChange={(e) => setNewReviewComment(e.target.value)}
+                                    placeholder="What do you think of this asset?"
+                                    rows={3}
+                                    style={{
+                                        width: '100%', padding: '10px 14px', borderRadius: '8px',
+                                        background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                                        color: 'var(--text-primary)', fontSize: '13px', outline: 'none', resize: 'vertical',
+                                        fontFamily: 'var(--font)'
+                                    }}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={submittingReview}
+                                style={{
+                                    padding: '10px 20px', background: 'var(--text-primary)', color: 'var(--bg-page)',
+                                    border: 'none', borderRadius: '8px', cursor: submittingReview ? 'not-allowed' : 'pointer',
+                                    fontSize: '14px', fontWeight: 600, fontFamily: 'var(--font)', transition: 'all 0.15s ease'
+                                }}
+                            >{submittingReview ? 'Submitting...' : 'Post Review'}</button>
+                        </form>
+                    </div>
+
+                    {/* Display Reviews */}
+                    {reviews.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>No reviews yet. Be the first to review!</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {reviews.map(review => (
+                                <div key={review.id} style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-default)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{review.username}</span>
+                                            <span style={{ color: '#fbbf24', fontSize: '13px' }}>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                                        </div>
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                                            {new Date(review.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px', lineHeight: 1.5 }}>
+                                        {review.comment || <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>No comment provided.</span>}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
 

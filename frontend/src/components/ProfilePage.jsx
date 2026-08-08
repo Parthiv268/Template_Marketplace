@@ -133,7 +133,7 @@ function ProfilePage() {
                 }}>
                   {profile.status === 'creator' ? '⚡ Verified Creator Status' : 'Standard User'}
                 </span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '13px', wordBreak: 'break-all' }}>
                   {profile.email}
                 </span>
               </div>
@@ -169,7 +169,7 @@ function ProfilePage() {
                 </div>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
                   <p style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>EMAIL ADDRESS</p>
-                  <p style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, margin: 0 }}>{profile.email}</p>
+                  <p style={{ color: '#ffffff', fontSize: '18px', fontWeight: 700, margin: 0, wordBreak: 'break-all' }}>{profile.email}</p>
                 </div>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
                   <p style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>ACCOUNT TYPE</p>

@@ -6,26 +6,26 @@ import { jwtDecode } from "jwt-decode";
 
 async function registerUser(username, email, password) {
 
-    // fetch - sends https request to url(does task of postman) returns promise(unitll it runs across django for response) and awaits poses function until promise fulfilled
-    // res stores response
-    const res = await fetch(`${BASE_URL}/accounts/register/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password }),
-        });
+  // fetch - sends https request to url(does task of postman) returns promise(unitll it runs across django for response) and awaits poses function until promise fulfilled
+  // res stores response
+  const res = await fetch(`${BASE_URL}/accounts/register/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, email, password }),
+  });
 
-    // reading response
-    const data = await res.json();
+  // reading response
+  const data = await res.json();
 
 
-    // res.ok is a built in boolean decide whether response is ok(200 - success) or not(400 - validation error
-    //  401-unauthorized, 403 - forbidden, 404 - not found, 500 - internal server error) if false 
-    // throw data - stops function and returns something went wrong (handled in try/catch block during form)
-    if (!res.ok) {
-        throw data;
-    }
+  // res.ok is a built in boolean decide whether response is ok(200 - success) or not(400 - validation error
+  //  401-unauthorized, 403 - forbidden, 404 - not found, 500 - internal server error) if false 
+  // throw data - stops function and returns something went wrong (handled in try/catch block during form)
+  if (!res.ok) {
+    throw data;
+  }
 
-    return data;
+  return data;
 }
 
 async function loginUser(username, password) {
@@ -102,7 +102,7 @@ async function refreshAccessToken() {
   return data.access;
 }
 
-function decodeToken(token){
+function decodeToken(token) {
   //task :takes the raw token string, decodes its middle (payload) section from Base64 into a real JS object 
   try {
     return jwtDecode(token);
