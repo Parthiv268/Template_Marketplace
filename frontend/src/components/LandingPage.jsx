@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 function LandingPage() {
     const navigate = useNavigate();
     const canvasRef = useRef(null);
-    const [activeTab, setActiveTab] = useState('trending');
 
     /* ── Organic 3D Flocking Particle Engine (Neon Cyan / Electric Blue / Emerald Green) ── */
     useEffect(() => {
@@ -240,59 +239,7 @@ function LandingPage() {
                     </div>
                 </motion.div>
 
-                {/* ── IDEA 2: LIVE PLATFORM STATISTICS COUNTER WITH SMOOTH SCROLL REVEAL ── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.2 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="glass-panel"
-                    style={{
-                        padding: '32px 40px',
-                        borderRadius: '24px',
-                        marginBottom: '60px',
-                        background: 'rgba(10, 14, 26, 0.85)',
-                        border: '1px solid rgba(16, 185, 129, 0.3)',
-                        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(16, 185, 129, 0.2)',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                        gap: '24px',
-                        textAlign: 'center',
-                    }}
-                >
-                    <div>
-                        <p style={{ color: '#10b981', fontSize: '32px', fontWeight: 800, margin: '0 0 4px', fontFamily: 'var(--font-heading)' }}>
-                            ₹500K+
-                        </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Total Creator Volume
-                        </p>
-                    </div>
-                    <div>
-                        <p style={{ color: '#06b6d4', fontSize: '32px', fontWeight: 800, margin: '0 0 4px', fontFamily: 'var(--font-heading)' }}>
-                            1,200+
-                        </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Verified NFT Code Assets
-                        </p>
-                    </div>
-                    <div>
-                        <p style={{ color: '#a855f7', fontSize: '32px', fontWeight: 800, margin: '0 0 4px', fontFamily: 'var(--font-heading)' }}>
-                            100%
-                        </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Perpetual Royalty Protection
-                        </p>
-                    </div>
-                    <div>
-                        <p style={{ color: '#3b82f6', fontSize: '32px', fontWeight: 800, margin: '0 0 4px', fontFamily: 'var(--font-heading)' }}>
-                            0%
-                        </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Fraud Software Guarantee
-                        </p>
-                    </div>
-                </motion.div>
+
 
                 {/* ── IDEA 4: INTERACTIVE TOKEN RESALE FLOW WALKTHROUGH WITH STAGGERED MOTION ── */}
                 <div style={{ marginBottom: '70px' }}>
@@ -363,149 +310,6 @@ function LandingPage() {
                     </motion.div>
                 </div>
 
-                {/* ── IDEA 5: CREATOR SPOTLIGHT & TRENDING ASSETS WITH SCROLL REVEAL ── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.2 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    style={{ marginBottom: '70px' }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-                        <div>
-                            <span className="badge-cyan" style={{ marginBottom: '6px' }}>
-                                ❖ CREATOR SPOTLIGHT & TOP ASSETS
-                            </span>
-                            <h2 className="font-heading" style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                                Trending Code & <span className="text-gradient-neon">Top Developers</span>
-                            </h2>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                            <button
-                                onClick={() => setActiveTab('trending')}
-                                style={{
-                                    padding: '8px 18px', borderRadius: '8px', border: 'none',
-                                    background: activeTab === 'trending' ? 'var(--accent-gradient)' : 'transparent',
-                                    color: activeTab === 'trending' ? '#fff' : 'var(--text-secondary)',
-                                    fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
-                                }}
-                            >
-                                🔥 Trending Assets
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('creators')}
-                                style={{
-                                    padding: '8px 18px', borderRadius: '8px', border: 'none',
-                                    background: activeTab === 'creators' ? 'var(--accent-gradient)' : 'transparent',
-                                    color: activeTab === 'creators' ? '#fff' : 'var(--text-secondary)',
-                                    fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
-                                }}
-                            >
-                                ⚡ Top Creators
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* CHANGES TO FRONTEND — Smooth Animated Tab Transition for Trending Assets & Top Developers */}
-                    <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    >
-                        {activeTab === 'trending' ? (
-                            <motion.div
-                                variants={containerVariants}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: false, amount: 0.15 }}
-                                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}
-                            >
-                                {/* Top Card 1 */}
-                                <motion.div
-                                    variants={cardVariants}
-                                    whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 40px rgba(6, 182, 212, 0.3), 0 0 25px rgba(6, 182, 212, 0.2)' }}
-                                    className="glass-card"
-                                    style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
-                                >
-                                    <div style={{ height: '140px', borderRadius: '12px', background: 'linear-gradient(135deg, #1e1b4b, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', marginBottom: '16px', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.4)' }}>
-                                        ⚡
-                                    </div>
-                                    <span className="badge-cyan" style={{ fontSize: '10px', marginBottom: '8px' }}>React + Vite Template</span>
-                                    <h3 className="font-heading" style={{ color: '#fff', fontSize: '18px', margin: '0 0 6px' }}>Quantum Admin Dashboard UI</h3>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: '0 0 14px' }}>30+ dark mode components, Recharts integration & responsive grid.</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>₹399</span>
-                                        <button onClick={() => navigate('/marketplace')} className="btn-glow" style={{ padding: '6px 14px', fontSize: '12px' }}>View Details</button>
-                                    </div>
-                                </motion.div>
-
-                                {/* Top Card 2 */}
-                                <motion.div
-                                    variants={cardVariants}
-                                    whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3), 0 0 25px rgba(16, 185, 129, 0.2)' }}
-                                    className="glass-card"
-                                    style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
-                                >
-                                    <div style={{ height: '140px', borderRadius: '12px', background: 'linear-gradient(135deg, #064e3b, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', marginBottom: '16px', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.4)' }}>
-                                        🐍
-                                    </div>
-                                    <span className="badge-cyan" style={{ fontSize: '10px', marginBottom: '8px' }}>Django REST Framework</span>
-                                    <h3 className="font-heading" style={{ color: '#fff', fontSize: '18px', margin: '0 0 6px' }}>DRF Multi-Tenant SaaS Engine</h3>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: '0 0 14px' }}>JWT auth, payment webhooks, custom user roles & permission specs.</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>₹699</span>
-                                        <button onClick={() => navigate('/marketplace')} className="btn-glow" style={{ padding: '6px 14px', fontSize: '12px' }}>View Details</button>
-                                    </div>
-                                </motion.div>
-
-                                {/* Top Card 3 */}
-                                <motion.div
-                                    variants={cardVariants}
-                                    whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 40px rgba(124, 58, 237, 0.3), 0 0 25px rgba(124, 58, 237, 0.2)' }}
-                                    className="glass-card"
-                                    style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
-                                >
-                                    <div style={{ height: '140px', borderRadius: '12px', background: 'linear-gradient(135deg, #311b92, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', marginBottom: '16px', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.4)' }}>
-                                        ❖
-                                    </div>
-                                    <span className="badge-cyan" style={{ fontSize: '10px', marginBottom: '8px' }}>Web3 / NFT Smart Contract</span>
-                                    <h3 className="font-heading" style={{ color: '#fff', fontSize: '18px', margin: '0 0 6px' }}>NFT Royalty Distribution Suite</h3>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: '0 0 14px' }}>ERC-721 token contract with built-in 10% secondary royalty split.</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>₹899</span>
-                                        <button onClick={() => navigate('/marketplace')} className="btn-glow" style={{ padding: '6px 14px', fontSize: '12px' }}>View Details</button>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                variants={containerVariants}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: false, amount: 0.15 }}
-                                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}
-                            >
-                                <motion.div
-                                    variants={cardVariants}
-                                    whileHover={{ y: -8, scale: 1.03, boxShadow: '0 20px 40px rgba(6, 182, 212, 0.3)' }}
-                                    className="glass-card"
-                                    style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}
-                                >
-                                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 800, boxShadow: '0 0 15px rgba(124, 58, 237, 0.4)' }}>
-                                        A1
-                                    </div>
-                                    <div>
-                                        <h4 className="font-heading" style={{ color: '#fff', fontSize: '16px', margin: '0 0 4px' }}>
-                                            admin1 <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 700, marginLeft: '6px' }}>✓ Verified Superadmin</span>
-                                        </h4>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0 }}>42 Collections Minted • ₹120K Creator Volume</p>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        )}
-                    </motion.div>
-                </motion.div>
 
                 {/* ── CALL TO ACTION FOOTER BANNER WITH SCROLL REVEAL ── */}
                 <motion.div
@@ -536,6 +340,60 @@ function LandingPage() {
                         <button onClick={() => navigate('/login')} className="btn-glass" style={{ padding: '12px 28px' }}>
                             Sign In / Register →
                         </button>
+                    </div>
+                </motion.div>
+
+                {/* ── HELP & ABOUT ME SECTION ── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false, amount: 0.3 }}
+                    transition={{ duration: 0.6 }}
+                    style={{
+                        marginTop: '60px',
+                        paddingTop: '40px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '30px',
+                    }}
+                >
+                    <div>
+                        <span className="badge-cyan" style={{ marginBottom: '10px' }}>
+                            ❖ HELP & SUPPORT
+                        </span>
+                        <h3 className="font-heading" style={{ fontSize: '24px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>
+                            About <span className="text-gradient-neon">Me</span>
+                        </h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6, margin: '0 0 16px' }}>
+                            I'm a passionate full-stack developer dedicated to building secure, scalable, and decentralized platforms for the modern web. Have a question about a token or need technical assistance? Reach out to me anytime!
+                        </p>
+                    </div>
+
+                    <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <h4 className="font-heading" style={{ color: '#fff', fontSize: '18px', margin: 0 }}>Contact Details</h4>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                                ✉️
+                            </div>
+                            <div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, margin: '0 0 2px', textTransform: 'uppercase' }}>Email Support</p>
+                                <p style={{ color: '#06b6d4', fontSize: '14px', fontWeight: 600, margin: 0 }}>help@quantummarket.dev</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>admin.support@quantum.io</p>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                                📞
+                            </div>
+                            <div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 700, margin: '0 0 2px', textTransform: 'uppercase' }}>Direct Mobile</p>
+                                <p style={{ color: '#10b981', fontSize: '14px', fontWeight: 600, margin: 0 }}>+91 98765 43210</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>+1 (555) 123-4567</p>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
 
