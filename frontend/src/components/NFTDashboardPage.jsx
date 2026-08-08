@@ -962,6 +962,10 @@ function TokenCard({ token, onRefresh }) {
     }
   };
 
+  const imageUrl = token.resource_thumbnail 
+    ? (token.resource_thumbnail.startsWith('http') ? token.resource_thumbnail : `${API}${token.resource_thumbnail}`) 
+    : null;
+
   return (
     <div style={{
       background: 'rgba(124,58,237,0.08)',
@@ -971,9 +975,10 @@ function TokenCard({ token, onRefresh }) {
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
+      height: '100%',
     }}>
-      {token.resource_thumbnail && (
-        <img src={token.resource_thumbnail} alt=""
+      {imageUrl && (
+        <img src={imageUrl} alt=""
           style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
       )}
       <p style={{ color: COLORS.text, fontWeight: 600, margin: 0, fontSize: '13px' }}>
@@ -985,49 +990,52 @@ function TokenCard({ token, onRefresh }) {
       <p style={{ color: COLORS.muted, fontSize: '11px', margin: 0 }}>
         {token.royalty_percent}% royalty · minted {new Date(token.minted_at).toLocaleDateString('en-IN')}
       </p>
-      {token.is_listed_for_resale ? (
-        <span style={{ background: '#fbbf24', color: '#000', fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '99px', textAlign: 'center' }}>
-          Listed @ ₹{token.resale_price}
-        </span>
-      ) : (
-        <>
-          {!listing ? (
-            <button onClick={() => setListing(true)} style={{
-              background: 'transparent', border: '1px solid rgba(124,58,237,0.4)',
-              color: '#a78bfa', borderRadius: '8px', padding: '6px', cursor: 'pointer',
-              fontSize: '12px', fontWeight: 600,
-            }}>
-              List for Resale
-            </button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <input
-                type="number" placeholder="Resale price ₹" value={price}
-                onChange={e => setPrice(e.target.value)}
-                style={{
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                  color: COLORS.text, borderRadius: '6px', padding: '6px 10px', fontSize: '12px',
-                }}
-              />
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button onClick={listForResale} disabled={loading} style={{
-                  flex: 1, background: '#7c3aed', color: '#fff', border: 'none',
-                  borderRadius: '6px', padding: '6px', cursor: 'pointer', fontSize: '12px',
-                }}>
-                  {loading ? '…' : 'Confirm'}
-                </button>
-                <button onClick={() => { setListing(false); setMsg(''); }} style={{
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-                  color: COLORS.muted, borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px',
-                }}>
-                  ✕
-                </button>
+      
+      <div style={{ marginTop: 'auto' }}>
+        {token.is_listed_for_resale ? (
+          <span style={{ display: 'block', background: '#fbbf24', color: '#000', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '99px', textAlign: 'center' }}>
+            Listed @ ₹{token.resale_price}
+          </span>
+        ) : (
+          <>
+            {!listing ? (
+              <button onClick={() => setListing(true)} style={{
+                width: '100%', background: 'transparent', border: '1px solid rgba(124,58,237,0.4)',
+                color: '#a78bfa', borderRadius: '8px', padding: '6px', cursor: 'pointer',
+                fontSize: '12px', fontWeight: 600,
+              }}>
+                List for Resale
+              </button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <input
+                  type="number" placeholder="Resale price ₹" value={price}
+                  onChange={e => setPrice(e.target.value)}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: COLORS.text, borderRadius: '6px', padding: '6px 10px', fontSize: '12px',
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={listForResale} disabled={loading} style={{
+                    flex: 1, background: '#7c3aed', color: '#fff', border: 'none',
+                    borderRadius: '6px', padding: '6px', cursor: 'pointer', fontSize: '12px',
+                  }}>
+                    {loading ? '…' : 'Confirm'}
+                  </button>
+                  <button onClick={() => { setListing(false); setMsg(''); }} style={{
+                    background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+                    color: COLORS.muted, borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px',
+                  }}>
+                    ✕
+                  </button>
+                </div>
+                {msg && <p style={{ color: msg.includes('✓') ? '#10b981' : COLORS.danger, fontSize: '11px', margin: 0 }}>{msg}</p>}
               </div>
-              {msg && <p style={{ color: msg.includes('✓') ? '#10b981' : COLORS.danger, fontSize: '11px', margin: 0 }}>{msg}</p>}
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
