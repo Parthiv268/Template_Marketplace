@@ -25,8 +25,8 @@ urlpatterns = [
     path('api/accounts/',include('accounts.urls')),
     path('api/token/',TokenObtainPairView.as_view(),name='token_obtain_pair'),
     path('api/token/refresh/',TokenRefreshView.as_view(),name='token_refresh'),
+    path('api/resources/',include('resources.urls')),
+    path('api/payments/',include('payments.urls')),
 ]
-
-#generates url routing needed to serve media files in development mode (manually added)
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# done to serve media files and to sotr ehtme in specific folders here.

@@ -37,9 +37,12 @@ class RegisterSerializer(serializers.ModelSerializer):
                 )
         return user
 class ProfileSerializer(serializers.ModelSerializer):
-    username=serializers.CharField(source='user.username',read_only=True)
-    email=serializers.CharField(source='user.email',read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    is_staff = serializers.BooleanField(source='user.is_staff', read_only=True)
+# is_staff is to check whether it is admin or not
     class Meta:
-        model=Profile
-        fields=['username','email','status','bio','profile_picture']
+        model = Profile
+        fields = ['username', 'email', 'status', 'bio', 'profile_picture', 'is_staff']
+        read_only_fields = ['status', 'is_staff']
     
